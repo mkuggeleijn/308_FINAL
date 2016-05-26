@@ -183,8 +183,13 @@ void render(int width, int height) {
 int main() {
 
 	g_plane = new Geometry("./work/res/assets/plane.obj");
-
+	cout << "Generating Point Set..." << endl;
 	vector<vVertexPoint> pointCloud = vHandler.generatePointSet(density);
+	cout << "pointCloud size: " << pointCloud.size() << endl;
+	cout << "Generating Voronoi Polygons..." << endl;
+	vHandler.generateVPolys(&pointCloud);
+
+	vector<vEdge*> edgeSet = vHandler.getEdges();
 
 	//pointCloud = vHandler.generatePointSet(density);
 	// vHandler.generateVPolys(&pointCloud);
@@ -204,13 +209,24 @@ int main() {
 
 	}
 
+	cout << "Drawing edges" << endl;
+
+	cout << "edgeSet size: " << edgeSet.size() << endl;
+
+	/*
+	for (vEdge *edge : edgeSet) {
+		
+		cout << "v1 coords:" << edge->v1->getCoords() << "\tv2 coords: " << edge->v2->getCoords() << endl;
+	}*/
+
 	CImgDisplay draw_disp(pointDisplay, "Display Points");
 
 	// Shifting this to inside other while loop
-	//while (!draw_disp.is_closed() && !draw_disp.is_closed()) {
-	//	draw_disp.wait();
-	// }
+	while (!draw_disp.is_closed() && !draw_disp.is_closed()) {
+		draw_disp.wait();
+	}
 
+	/*
 	// Initialize the GLFW library
 	if (!glfwInit()) {
 		cerr << "Error: Could not initialize GLFW" << endl;
@@ -278,7 +294,7 @@ int main() {
 
 	// Initialize IMGUI
 
-
+	/*
 
 
 	// Loop until the user closes the window
@@ -301,5 +317,6 @@ int main() {
 	}
 
 	glfwTerminate();
+	*/
 }
 

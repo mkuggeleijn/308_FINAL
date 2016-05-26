@@ -58,5 +58,6 @@ public:
 	~VoronoiHandler();
 	void generateVPolys(vector<vVertexPoint>*);
 	vector<vVertexPoint> generatePointSet(int);
+	vector<vEdge*> getEdges();
 
 };

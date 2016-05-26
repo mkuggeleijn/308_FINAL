@@ -73,7 +73,7 @@ void ArcNode::setEdge(vEdge *newEdge) {
 
 ArcNode* ArcNode::getLeftChildLeaf(ArcNode *node) {
 	ArcNode *lchild = node->getLeft();
-	while (!lchild->isLeaf) {
+	while (lchild != nullptr && !lchild->isLeaf) {
 		lchild = lchild->getRight();
 	}
 	return lchild;
@@ -81,7 +81,7 @@ ArcNode* ArcNode::getLeftChildLeaf(ArcNode *node) {
 
 ArcNode* ArcNode::getRightChildLeaf(ArcNode *node) {
 	ArcNode *rchild = node->getRight();
-	while (!rchild->isLeaf) {
+	while (rchild != nullptr && !rchild->isLeaf) {
 		rchild = rchild->getLeft();
 	}
 	return rchild;
