@@ -50,6 +50,7 @@ void vVertexPoint::setZValue(float zValue) {
 }
 
 vec2 vVertexPoint::getCoords() {
+	//cout << "Coords: " << coords << endl;
 	return this->coords;
 }
 void vVertexPoint::setCoords(vec2 coords) {
@@ -72,4 +73,12 @@ vector<vVertexPoint*> vVertexPoint::getCellNeighbours() {
 }
 void vVertexPoint::addCellNeighbour(vVertexPoint* neighbour) {
 	this->cellNeighbours.push_back(neighbour);
+}
+
+void vVertexPoint::setExit(bool isExit) {
+	this->isExit = isExit;
+}
+
+bool vVertexPoint::getExit() {
+	return this->isExit;
 }

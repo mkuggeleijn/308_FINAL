@@ -17,6 +17,7 @@ private:
 	vector<vVertexPoint*> edgeNeighbours;
 	vector<vVertexPoint*> cellNeighbours;
 	float zValue;
+	bool isExit;
 
 public:
 	// Constructors/Destructor
@@ -37,4 +38,6 @@ public:
 	void addEdgeNeighbour(vVertexPoint*);
 	vector<vVertexPoint*> getCellNeighbours();
 	void addCellNeighbour(vVertexPoint*);
+	void setExit(bool);
+	bool getExit();
 };

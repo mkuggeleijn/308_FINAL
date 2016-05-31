@@ -33,7 +33,7 @@ private:
 	vector<vVertexPoint*> polyCorners;
 	vector<vEdge*> polyEdges;
 
-	ArcNode *treeRoot = nullptr;
+	ArcNode *treeRoot = 0;
 
 	float sweepY; // Sweepline position
 
@@ -58,5 +58,6 @@ public:
 	~VoronoiHandler();
 	void generateVPolys(vector<vVertexPoint>*);
 	vector<vVertexPoint> generatePointSet(int);
+	vector<vEdge*> getEdges();
 
 };

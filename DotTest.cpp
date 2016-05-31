@@ -9,6 +9,7 @@
 #include "VoronoiHandler.h"
 #include "CImg.h"
 #include "geometry.hpp"
+#include "SimpleGrid.h"
 
 using namespace std;
 using namespace cgra;
@@ -20,9 +21,12 @@ Geometry *g_plane = nullptr;
 
 
 VoronoiHandler vHandler;
+
 int imageSize = 800;
 int density = 100;
-int radius = 2;
+int radius = 1;
+
+SimpleGrid pointGrid(20);
 
 // Window
 //
@@ -47,7 +51,7 @@ float g_zoom = 1.0;
 float g_rot = 1.0;
 
 const unsigned char red[] = { 255,0,0 };
-CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
+
 
 
 // Mouse Button callback
@@ -121,7 +125,7 @@ void setupCamera(int width, int height) {
 	// Set up the projection matrix
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(g_fovy, width / float(height), g_znear, g_zfar);
+	// gluPerspective(g_fovy, width / float(height), g_znear, g_zfar); ??????????
 
 	// Set up the view part of the model view matrix
 	glMatrixMode(GL_MODELVIEW);
@@ -182,21 +186,43 @@ void render(int width, int height) {
 
 int main() {
 
-	g_plane = new Geometry("./work/res/assets/plane.obj");
+	CImg<unsigned char> heightMap("./work/res/textures/test_heightmap.pgm");
+	imageSize = heightMap.width();
 
-	vector<vVertexPoint> pointCloud = vHandler.generatePointSet(density);
+	CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
+	pointDisplay.assign("./work/res/textures/test_heightmap.pgm");
+	pointDisplay.channel(3);
+
+
+	g_plane = new Geometry("./work/res/assets/plane.obj");
+	cout << "Generating Point Set..." << endl;
+	// vector<vVertexPoint> pointCloud = vHandler.generatePointSet(density);
+	
+	vector<vVertexPoint*> pointCloud = pointGrid.getPointCloud();
+	
+	
+	cout << "pointCloud size: " << pointCloud.size() << endl;
+	
+	cout << "Loading image..." << endl;
+
+	
+	//cout << "Generating Voronoi Polygons..." << endl;
+	// vHandler.generateVPolys(&pointCloud);
+
+	vector<vEdge*> edgeSet = vHandler.getEdges();
 
 	//pointCloud = vHandler.generatePointSet(density);
 	// vHandler.generateVPolys(&pointCloud);
 
 	cout << "Drawing Points" << endl;
 
-	for (vVertexPoint point : pointCloud) {
+	for (vVertexPoint *point : pointCloud) {
 
-		cout << "point coords: "<< point.getCoords() << endl;
-		int screenX = point.getCoords().x * imageSize;
-		int screenY = point.getCoords().y * imageSize;
-		cout << "screen coords: (" << screenX << "," << screenY << ")" << endl;
+		//cout << "point coords: "<< point->getCoords() << endl;
+		int screenX = point->getCoords().x * imageSize;
+		int screenY = point->getCoords().y * imageSize;
+		// cout << "screen coords: (" << screenX << "," << screenY << ")" << endl;
+		cout << "Value at " << point->getCoords() << ": " << (int)heightMap.data(screenX, screenY, 0, 0) << endl;
 
 
 		// draw a red circle
@@ -204,13 +230,27 @@ int main() {
 
 	}
 
+	/*
+	cout << "Drawing edges" << endl;
+
+	cout << "edgeSet size: " << edgeSet.size() << endl;
+
+	
+	for (vEdge *edge : edgeSet) {
+		
+		cout << "v1 coords:" << edge->v1->getCoords() << "\tv2 coords: " << edge->v2->getCoords() << endl;
+	
+	}
+	*/
+
 	CImgDisplay draw_disp(pointDisplay, "Display Points");
 
 	// Shifting this to inside other while loop
-	//while (!draw_disp.is_closed() && !draw_disp.is_closed()) {
-	//	draw_disp.wait();
-	// }
+	while (!draw_disp.is_closed() && !draw_disp.is_closed()) {
+		draw_disp.wait();
+	}
 
+	/*
 	// Initialize the GLFW library
 	if (!glfwInit()) {
 		cerr << "Error: Could not initialize GLFW" << endl;
@@ -278,7 +318,7 @@ int main() {
 
 	// Initialize IMGUI
 
-
+	/*
 
 
 	// Loop until the user closes the window
@@ -301,5 +341,6 @@ int main() {
 	}
 
 	glfwTerminate();
+	*/
 }
 

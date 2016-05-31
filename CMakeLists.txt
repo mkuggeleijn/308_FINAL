@@ -15,6 +15,7 @@ SET(headers
 	"vEdge.h"
 	"vEvent.h"
 	"geometry.hpp"
+	"SimpleGrid.h"
 )
 
 
@@ -27,6 +28,7 @@ SET(sources
 	"vEvent.cpp"
 	"vEdge.cpp"
 	"geometry.cpp"
+	"SimpleGrid.cpp"
 )
 
 # Add executable target and link libraries
