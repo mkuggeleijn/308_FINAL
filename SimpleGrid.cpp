@@ -45,19 +45,19 @@ void SimpleGrid::makeGrid() {
 			row->push_back(gridPoint);
 
 			if (x > 0) {
-				gridPoint->addEdgeNeighbour(row->at(x - 1));
-				row->at(x - 1)->addEdgeNeighbour(gridPoint);
+				gridPoint->addNeighbour(row->at(x - 1));
+				row->at(x - 1)->addNeighbour(gridPoint);
 				if (y > 0) {
-					gridPoint->addEdgeNeighbour(pointGrid.at(y - 1)->at(x - 1));
-					pointGrid.at(y - 1)->at(x - 1)->addEdgeNeighbour(gridPoint);
+					gridPoint->addNeighbour(pointGrid.at(y - 1)->at(x - 1));
+					pointGrid.at(y - 1)->at(x - 1)->addNeighbour(gridPoint);
 				}
 			}
 			if (y > 0) {
-				gridPoint->addEdgeNeighbour(pointGrid.at(y - 1)->at(x));
-				pointGrid.at(y - 1)->at(x)->addEdgeNeighbour(gridPoint);
+				gridPoint->addNeighbour(pointGrid.at(y - 1)->at(x));
+				pointGrid.at(y - 1)->at(x)->addNeighbour(gridPoint);
 				if (x < gridSize - 1) {
-					gridPoint->addEdgeNeighbour(pointGrid.at(y - 1)->at(x + 1));
-					pointGrid.at(y - 1)->at(x + 1)->addEdgeNeighbour(gridPoint);
+					gridPoint->addNeighbour(pointGrid.at(y - 1)->at(x + 1));
+					pointGrid.at(y - 1)->at(x + 1)->addNeighbour(gridPoint);
 				}
 			}
 			
@@ -79,18 +79,18 @@ void SimpleGrid::generateGrid() {
 			vVertexPoint *gridPoint = new vVertexPoint(px, py);
 			row->push_back(gridPoint);
 			if (x > 0 && y > 0 && x!= pointDensity-1 && y != pointDensity-1) {
-				gridPoint->addEdgeNeighbour(row->at(x - 1));
-				gridPoint->addEdgeNeighbour(pointGrid.at(y - 1)->at(x - 1));
-				gridPoint->addEdgeNeighbour(pointGrid.at(y - 1)->at(x));
-				gridPoint->addEdgeNeighbour(pointGrid.at(y - 1)->at(x + 1));
+				gridPoint->addNeighbour(row->at(x - 1));
+				gridPoint->addNeighbour(pointGrid.at(y - 1)->at(x - 1));
+				gridPoint->addNeighbour(pointGrid.at(y - 1)->at(x));
+				gridPoint->addNeighbour(pointGrid.at(y - 1)->at(x + 1));
 			}
 			
-			if (y > 0 && x > 1 && y != pointDensity - 1) row->at(x - 1)->addEdgeNeighbour(gridPoint);
+			if (y > 0 && x > 1 && y != pointDensity - 1) row->at(x - 1)->addNeighbour(gridPoint);
 
 			if (y > 1) {
-				if (x < pointDensity - 2) pointGrid.at(y - 1)->at(x + 1)->addEdgeNeighbour(gridPoint);
-				if (x != pointDensity - 1 && x != 0) pointGrid.at(y - 1)->at(x)->addEdgeNeighbour(gridPoint);
-				if (x > 1) pointGrid.at(y - 1)->at(x - 1)->addEdgeNeighbour(gridPoint);
+				if (x < pointDensity - 2) pointGrid.at(y - 1)->at(x + 1)->addNeighbour(gridPoint);
+				if (x != pointDensity - 1 && x != 0) pointGrid.at(y - 1)->at(x)->addNeighbour(gridPoint);
+				if (x > 1) pointGrid.at(y - 1)->at(x - 1)->addNeighbour(gridPoint);
 			}
 			
 			// if (x > 1 && y > 1) pointGrid.at(y)->at(x - 1)->addEdgeNeighbour(gridPoint);

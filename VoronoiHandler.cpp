@@ -29,275 +29,20 @@ vec2 VoronoiHandler::generatePoint() {
 	return point;
 }
 
-ArcNode* VoronoiHandler::getArcByX(float x){
-	ArcNode * arc = treeRoot;
-	float currentX = 0.0;
+bool VoronoiHandler::sortByX(const vec2 &p1, const vec2 &p2) {
+	return p1.x < p2.x;
+}
 
-	cout << "arc -> isLeaf:" << arc->isLeaf << endl;
+template <typename T>
+struct pointer_values_equal
+{
+	const T* to_find;
 
-	while (!arc->isLeaf) 
+	bool operator()(const T* other) const
 	{
-		currentX = getEdgeX(arc, sweepY); 
-		if (currentX > x) {
-			arc = arc->getLeft();
-		}
-		else {
-			arc = arc->getRight();
-		}
+		return *to_find == *other;
 	}
-	return arc;
-}
-
-float VoronoiHandler::generateY(vVertexPoint *pPoint, float x){
-	float pointX = pPoint->getCoords().x;
-	float pointY = pPoint->getCoords().y;
-
-	float dy = 2.0 * (pointY - sweepY);
-	double a1 = 1.0 / dy;
-	double b1 = -2.0 * pointX / dy;
-	double c1 = sweepY + dy / 4.0 + pointX * pointX / dy;
-
-	return(a1*x*x + b1*x + c1);
-}
-
-float VoronoiHandler::getEdgeX(ArcNode *arc, float y) {
-
-	ArcNode *left = arc->getLeftChildLeaf(arc);
-	ArcNode *right = arc->getRightChildLeaf(arc);
-
-	vVertexPoint *leftSite = left->getSite();
-	vVertexPoint *rightSite = right->getSite();
-
-	float leftX = leftSite->getCoords().x;
-	float leftY = leftSite->getCoords().y;
-	float rightX = rightSite->getCoords().x;
-	float rightY = rightSite->getCoords().y;
-
-	float dp = 2.0 * (leftY - y);
-	float a1 = 1.0 / dp;
-	float b1 = -2.0 * leftX / dp;
-	float c1 = y + dp / 4 + leftX * leftX / dp;
-
-	dp = 2.0 * (rightY - y);
-	float a2 = 1.0 / dp;
-	float b2 = -2.0 * rightX / dp;
-	float c2 = sweepY + dp / 4 + rightX * rightX / dp;
-
-	float a = a1 - a2;
-	float b = b1 - b2;
-	float c = c1 - c2;
-
-	float disc = b*b - 4 * a * c;
-	float x1 = (-b + std::sqrt(disc)) / (2 * a);
-	float x2 = (-b - std::sqrt(disc)) / (2 * a);
-
-	float ry;
-	if (leftY < rightY) ry = std::max(x1, x2);
-	else ry = std::min(x1, x2);
-
-	return ry;
-
-}
-
-
-void VoronoiHandler::checkCircleEvent(ArcNode *arc) {
-
-	// Having get parent problems
-	ArcNode *leftParent = arc->getLeftParent(arc);
-	cout << "leftParent:" << leftParent << endl;
-	ArcNode *rightParent = arc->getRightParent(arc);
-	cout << "rightParent:" << rightParent << endl;
-
-	ArcNode *leftChild = arc->getLeftChildLeaf(leftParent);
-	cout << "leftChild:" << leftChild << endl;
-	ArcNode *rightChild = arc->getRightChildLeaf(rightParent);
-	cout << "rightChild:" << rightChild << endl;
-
-	if (leftChild == 0 || rightChild == 0 || leftChild->getSite() == rightChild->getSite()) {
-		return;
-	}
-	else {
-		vVertexPoint *edgeIntersect = getEdgeIntersection(leftParent->getEdge(), rightParent->getEdge());
-		if (edgeIntersect == 0) {
-			return;
-		}
-		else {
-			float dx = leftChild->getSite()->getCoords().x - edgeIntersect->getCoords().x;
-			float dy = leftChild->getSite()->getCoords().y - edgeIntersect->getCoords().x;
-
-			float d = sqrt((dx * dx) + (dy * dy));
-
-			if (edgeIntersect->getCoords().y - d >= sweepY) {
-				return;
-			}
-			else {
-				vEvent *newEvent = new vEvent(new vVertexPoint(edgeIntersect->getCoords().x, edgeIntersect->getCoords().y - d), false);
-				newVPoints.push_back(newEvent->point);
-				arc->setEvent(newEvent);
-				newEvent->arc = arc;
-				eventQueue.push(newEvent);
-			}
-
-		}
-	}
-}
-
-vVertexPoint* VoronoiHandler::getEdgeIntersection(vEdge *e1, vEdge *e2) {
-	float x = (e2->g - e1->g) / (e1->f - e2->f);
-	float y = e1->f * x + e1->g;
-
-	if ((x - e1->v1->getCoords().x) / e1->direction->getCoords().x < 0) return 0;
-	if ((y - e1->v1->getCoords().y) / e1->direction->getCoords().y < 0) return 0;
-
-	if ((x - e2->v1->getCoords().x) / e2->direction->getCoords().x < 0) return 0;
-	if ((y - e2->v1->getCoords().y) / e2->direction->getCoords().y < 0) return 0;
-
-	vVertexPoint *newPoint = new vVertexPoint(x, y);
-	newVPoints.push_back(newPoint);
-	return newPoint;
-}
-
-void VoronoiHandler::addParabolaNode(vVertexPoint *pPoint) {
-
-	if (treeRoot == 0) {
-		cout << "Adding a tree Root" << endl;
-		treeRoot = new ArcNode(pPoint);
-		return;
-	}
-	// Here, what is going on?
-	else if (treeRoot->isLeaf && (treeRoot->getSite()->getCoords().y - pPoint->getCoords().y < 1)) {
-
-			vVertexPoint *focalPoint = treeRoot->getSite();
-			treeRoot->isLeaf = false;
-			treeRoot->setLeft(new ArcNode(focalPoint));
-			treeRoot->setRight(new ArcNode(pPoint));
-
-			vVertexPoint *s = new vVertexPoint((pPoint->getCoords().x + focalPoint->getCoords().x) / 2, 1.0f);
-			newVPoints.push_back(s);
-
-			if (pPoint->getCoords().x > focalPoint->getCoords().x) {
-				treeRoot->setEdge(new vEdge(s, focalPoint, pPoint));
-			}
-			else {
-				treeRoot->setEdge(new vEdge(s, pPoint, focalPoint));
-			}
-
-			cout << "Adding an edge" << endl;
-			polyEdges.push_back(treeRoot->getEdge());
-
-			return;
-		} 
-	else {
-		cout << "pPoint -> getCoords() = " << pPoint->getCoords() << endl;
-		ArcNode *parPoint = getArcByX(pPoint->getCoords().x);
-
-		if (parPoint->getEvent() != 0)
-		{
-			deletedEvents.insert(parPoint->getEvent());
-			parPoint->setEvent(0);
-		}
-
-		vVertexPoint *startPoint = new vVertexPoint(pPoint->getCoords().x, generateY(parPoint->getSite(), pPoint->getCoords().x));
-		newVPoints.push_back(startPoint);
-
-		vEdge *leftEdge = new vEdge(startPoint, parPoint->getSite(), pPoint);
-		vEdge *rightEdge = new vEdge(startPoint, pPoint, parPoint->getSite());
-
-		leftEdge->neighbour = rightEdge;
-		cout << "Adding an edge" << endl;
-		polyEdges.push_back(leftEdge);
-
-		parPoint->setEdge(rightEdge);
-		parPoint->isLeaf = false;
-
-		ArcNode *newArc0 = new ArcNode(parPoint->getSite());
-		ArcNode *newArc1 = new ArcNode(pPoint);
-		ArcNode *newArc2 = new ArcNode(parPoint->getSite());
-
-		parPoint->setRight(newArc2);
-		parPoint->setLeft(new ArcNode());
-		parPoint->getLeft()->setEdge(leftEdge);
-
-		parPoint->getLeft()->setLeft(newArc0);
-		parPoint->getLeft()->setRight(newArc1);
-
-		cout << "checkCircleEvent(newArc0)" << endl;
-		checkCircleEvent(newArc0);
-		// Arc2 is problem
-		cout << "checkCircleEvent(newArc1)" << endl;
-		checkCircleEvent(newArc2);
-		}
-	
-}
-
-void VoronoiHandler::deleteParabolaNode(vEvent *pEvent) {
-	ArcNode *eventArc = pEvent->arc;
-	ArcNode *leftParent = eventArc->getLeftParent(eventArc);
-	ArcNode *rightParent = eventArc->getRightParent(eventArc);
-	ArcNode *leftChild = eventArc->getLeftChildLeaf(leftParent);
-	ArcNode *rightChild = eventArc->getRightChildLeaf(rightParent);
-
-	if (leftChild->getEvent() != 0) { 
-		deletedEvents.insert(leftChild->getEvent()); 
-		leftChild->setEvent(0); 
-	}
-	if (rightChild->getEvent() != 0) { 
-		deletedEvents.insert(rightChild->getEvent());
-		rightChild->setEvent(0);
-	}
-
-	vVertexPoint *newPoint = new vVertexPoint(pEvent->point->getCoords().x, generateY(eventArc->getSite(), pEvent->point->getCoords().x));
-	newVPoints.push_back(newPoint);
-	leftParent->getEdge()->v2 = newPoint;
-	rightParent->getEdge()->v2 = newPoint;
-
-	ArcNode *higherArc;
-	ArcNode *parentArc = eventArc;
-
-	while (parentArc != treeRoot) { 
-		parentArc = parentArc->getParent();
-		if (parentArc == leftParent) {
-			higherArc = leftParent;
-		}
-		if (parentArc == rightParent) {
-			higherArc = rightParent;
-		}
-	}
-
-	higherArc->setEdge(new vEdge(newPoint, leftChild->getSite(), rightChild->getSite()));
-				cout << "Adding an edge" << endl;
-	polyEdges.push_back(higherArc->getEdge());
-
-	ArcNode *grandParent = eventArc->getParent()->getParent();
-
-	if (eventArc->getParent()->getLeft() == eventArc)
-	{
-		if (grandParent->getLeft() == eventArc->getParent()) {
-			grandParent->setLeft(eventArc->getParent()->getRight());
-		}
-		if (grandParent->getRight() == eventArc->getParent()) {
-			grandParent->setRight(eventArc->getParent()->getRight());
-		}
-	}
-	else
-	{
-		if (grandParent->getLeft() == eventArc->getParent()) {
-			grandParent->setLeft(eventArc->getParent()->getLeft());
-		}
-		if (grandParent->getRight() == eventArc->getParent()) {
-			grandParent->setRight(eventArc->getParent()->getLeft());
-		}
-	}
-
-	delete eventArc->getParent();
-	delete eventArc;
-
-	checkCircleEvent(leftChild);
-	checkCircleEvent(rightChild);
-
-}
-
-
+};
 
 // ############################################################
 // Public
@@ -311,9 +56,10 @@ vector<vEdge*> VoronoiHandler::getEdges() {
 	return polyEdges;
 }
 
-vector<vVertexPoint> VoronoiHandler::generatePointSet(int density) {
+vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 
-	vector<vVertexPoint> pointSet;
+	vector<vec2> pointSet;
+	vector<vVertexPoint*> vertexSet;
 	
 	pointSet.clear();
 
@@ -330,35 +76,153 @@ vector<vVertexPoint> VoronoiHandler::generatePointSet(int density) {
 		float y = dis(gen2);
 		cout << "x = " << x << " \ty = " << y << endl;
 
-		vVertexPoint point(x, y);
-		pointSet.push_back(point);
-		
+		// vVertexPoint point(x, y);
+		vec2 vPoint(x, y);
+		pointSet.push_back(vPoint);
 	}
 
-	return pointSet;
+	// sort(pointSet.begin(), pointSet.end(),sortByX); // ascending order by X
+
+	for (vec2 p : pointSet) {
+		vVertexPoint *v = new vVertexPoint(p.x, p.y);
+		vertexSet.push_back(v);
+	}
+	return vertexSet; 
 
 }
 
+list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCenters) {
+	list<vTriangle*> newTriangles;
+	list <vTriangle*> badTriangles;
+	list<vTriangle*> finalTriangles;
+
+	// add super-triangle (must be large enough to completely contain all the points in pointList)
+	float min = -0.1;
+	float max = 2.1;
+
+	vVertexPoint *superv0 = new vVertexPoint(min, min);
+	vVertexPoint *superv1 = new vVertexPoint(max, min);
+	vVertexPoint *superv2 = new vVertexPoint(max, max);
+
+	cout << "Adding Super Triangle" << endl;
+	vTriangle *superTri = new vTriangle(superv0, superv1, superv2);
+	//cout << "SuperTri edge size: " << superTri->getEdges().size() << endl;
+
+	newTriangles.push_back(superTri);
+	
+	// add the points one at a time to the triangulation
+
+	for (vVertexPoint *v : triCenters) {
+		badTriangles.clear();
+		for (vTriangle *t : newTriangles) {
+			if (circumCircle(v, t)) { //if point is inside circumcircle of triangle
+				//cout << "point "<<v->getCoords()<< "inside triangle, adding to bad list" << endl;
+				badTriangles.push_back(t);
+			}
+		}
+
+
+		vector<vEdge*> holeEdges;
+
+		// find the boundary of the polygonal hole
+		for (vTriangle *t : badTriangles) {
+			//cout << "edgesize: " << t->getEdges().size() << endl;
+			for (vEdge *e : t->getEdges()) {
+				// if edge is not shared by any other triangles in badTriangles
+				bool shared = false;
+				if (e->polys.size() > 0) {
+					for (vTriangle *et : e->polys) {
+						if (et != t && (find(badTriangles.begin(), badTriangles.end(), et) != badTriangles.end())) {
+							//cout << "Found a shared edge in badTriangles" << endl;
+							shared = true;
+						}
+					}
+				}
+				if (!shared) {
+					//cout << "Adding edge to holeedge list" << endl;
+					holeEdges.push_back(e);
+				}
+			}
+		}
+
+		// remove bad triangles from the data structure
+		for (vTriangle *t : badTriangles) {
+			//cout << "Removing triangles from bad list"<<endl;
+			newTriangles.remove(t);
+		}
+
+		// re-triangulate the polygonal hole
+		for (vEdge* e : holeEdges) { 
+			vTriangle *t = new vTriangle(v, e->v0, e->v1); // form a triangle from edge to point
+			//cout << "Adding New Triangle" << endl;
+			newTriangles.push_back(t);
+		}
+	}
+	for (vTriangle *t : newTriangles) {
+		/*
+		if triangle contains a vertex from original super-triangle
+		remove triangle from triangulation
+		Should be okay if make sure random points have some on border
+		*/
+		bool superMatch = false;
+
+		for (vVertexPoint *v : t->getCorners()) {
+			for (vVertexPoint *tv : t->getCorners()) {
+				if (tv == v) {
+					superMatch = true;
+					//cout << "Found triangle with vertex of super triangle" << endl;
+					break;
+				}
+				if (superMatch) break;
+			}
+			if (superMatch) break;
+		}
+		if (!superMatch) finalTriangles.push_back(t);
+	}
+	cout << "Total triangles: " << finalTriangles.size() << endl;
+	cout << "Bad triangles: " << badTriangles.size() << endl;
+	// return finalTriangles;
+	return badTriangles;
+}
+
+
+bool VoronoiHandler::circumCircle(vVertexPoint *point, vTriangle *triangle) {
+
+	// First make a matrix from the triangle verticies
+	// then calculate the determinate
+	// if >0, return true;
+	// else return false
+
+	float px = point->getCoords().x;
+	float py = point->getCoords().y;
+
+	float pxsq = px*px;
+	float pysq = py*py;
+
+	float x0 = triangle->getCorners().at(0)->getCoords().x;
+	float x1 = triangle->getCorners().at(1)->getCoords().x;
+	float x2 = triangle->getCorners().at(2)->getCoords().x;
+
+	float x0sq = x0*x0;
+	float x1sq = x1*x1;
+	float x2sq = x2*x2;
+
+	float y0 = triangle->getCorners().at(0)->getCoords().y;
+	float y1 = triangle->getCorners().at(1)->getCoords().y;
+	float y2 = triangle->getCorners().at(2)->getCoords().y;
+
+	float y0sq = y0*y0;
+	float y1sq = y1*y1;
+	float y2sq = y2*y2;
+
+	float det = mat4::det3x3((x0 - px), (y0 - py), ((x0sq - pxsq) + (y0sq - pysq)),
+		(x1 - px), (y1 - py), ((x1sq - pxsq) + (y1sq - pysq)),
+		(x2 - px), (y2 - py), ((x2sq - pxsq) + (y2sq - pysq)));
+
+	if (det < 0) return true; // >0 if points are sorted counterclockwise (which they should be, see triangle constructor)
+	else return false;
+}
+
 void VoronoiHandler::generateVPolys(vector<vVertexPoint> *pointCloud) {
-
-
-	// Populate Event Queue
-	for (int x = 0; x < pointCloud->size(); x++) {
-		vVertexPoint *vpoint = &(pointCloud->at(x));
-		vEvent event(vpoint, true);
-		eventQueue.push(&event);
-		cout << "Pushing event to queue" << endl;
-	}
-
-	while (!eventQueue.empty()) {
-		vEvent *e = eventQueue.top(); // now this is a problem
-		if (e->placeEvent) {
-			addParabolaNode(e->point);
-		}
-		else {
-			deleteParabolaNode(e);
-		}
-	}
-
 }
 

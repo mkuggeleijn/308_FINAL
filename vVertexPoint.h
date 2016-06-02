@@ -1,21 +1,27 @@
 #pragma once
 
+#ifndef VVERTEXPOINT_H
+#define VVERTEXPOINT_H
+
 #include <vector>
 
 #include "cgra_math.hpp"
 #include "cgra_geometry.hpp"
+#include "vEdge.h"
 
 
 using namespace std;
 using namespace cgra;
 
 // Class for vertex points
+class vVertexPoint;
+class vEdge;
 
 class vVertexPoint {
 private:
 	vec2 coords;
-	vector<vVertexPoint*> edgeNeighbours;
-	vector<vVertexPoint*> cellNeighbours;
+	vector<vVertexPoint*> neighbours;
+	vector<vEdge*> edges;
 	float zValue;
 	bool isExit;
 
@@ -34,10 +40,12 @@ public:
 	void setCoords(float, float);
 	float getZValue();
 	void setZValue(float);
-	vector<vVertexPoint*> getEdgeNeighbours();
-	void addEdgeNeighbour(vVertexPoint*);
-	vector<vVertexPoint*> getCellNeighbours();
-	void addCellNeighbour(vVertexPoint*);
+	vector<vEdge*> getEdges();
+	void addEdge(vEdge*);
+	vector<vVertexPoint*> getNeighbours();
+	void addNeighbour(vVertexPoint*);
 	void setExit(bool);
 	bool getExit();
 };
+
+#endif VVERTEXPOINT_H
