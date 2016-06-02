@@ -1,22 +1,34 @@
 #pragma once
 
+#ifndef VEDGE_H
+#define VEDGE_H
+
+#include <vector>
+
 #include "vVertexPoint.h"
+#include "vTriangle.h"
+
+using namespace std;
+using namespace cgra;
+
+class vEdge;
+class vTriangle;
+class vVertexPoint;
 
 class vEdge {
+
 public:
+	vector<vTriangle*> polys;
+	vector<vEdge*>neighbours;
+	vVertexPoint* v0;
 	vVertexPoint* v1;
-	vVertexPoint* v2;
 
-	vVertexPoint* direction;
+	vEdge(vVertexPoint*, vVertexPoint*, vTriangle*);
 
-	vVertexPoint* left;
-	vVertexPoint* right;
+	static vEdge* checkDuplicate(vVertexPoint*, vVertexPoint*, vTriangle*);
 
-	float f;
-	float g;
 
-	vEdge* neighbour;
-
-	vEdge(vVertexPoint*, vVertexPoint*, vVertexPoint*);
 
 };
+
+#endif VEDGE_H

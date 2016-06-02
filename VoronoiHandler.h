@@ -11,13 +11,15 @@
 #include "cgra_geometry.hpp"
 #include "opengl.hpp"
 #include "vVertexPoint.h"
-#include "vArc.h"
-#include "vEvent.h"
 #include "vEdge.h"
+#include "vTriangle.h"
+
+
+
+// #define EPSILON 1.0e-7
 
 using namespace std;
 using namespace cgra;
-
 
 // ############################################################
 // Voronoi Handler Class
@@ -29,35 +31,28 @@ private:
 
 	int pointDensity;
 	// vector<vec2> pointSet;
+	vector<vVertexPoint*> triCenters;
+	vector<vVertexPoint*> triCorners;
+	vector<vEdge*> triEdges;
+	list<vTriangle*> triangles;
+
 	vector<vVertexPoint*> polyCenters;
 	vector<vVertexPoint*> polyCorners;
 	vector<vEdge*> polyEdges;
 
-	ArcNode *treeRoot = 0;
-
-	float sweepY; // Sweepline position
 
 	vec2 generatePoint();
+	bool sortByX(const vec2&, const vec2&);
+	bool circumCircle(vVertexPoint*, vTriangle*);
 
-	set<vEvent*> deletedEvents;
-	list<vVertexPoint*> newVPoints;
-	priority_queue<vEvent*,vector<vEvent*>,CompareY> eventQueue;
 
-	void addParabolaNode(vVertexPoint*);
-	void deleteParabolaNode(vEvent*);
-
-	ArcNode* getArcByX(float x);
-	float getEdgeX(ArcNode*, float);
-	float generateY(vVertexPoint*, float);
-	void checkCircleEvent(ArcNode*);
-	vVertexPoint* getEdgeIntersection(vEdge*, vEdge*);
-	
 public:
 
 	VoronoiHandler();
 	~VoronoiHandler();
+	list<vTriangle*> generateTriangles(vector<vVertexPoint*>);
 	void generateVPolys(vector<vVertexPoint>*);
-	vector<vVertexPoint> generatePointSet(int);
+	vector<vVertexPoint*> generatePointSet(int);
 	vector<vEdge*> getEdges();
 
 };

@@ -1,17 +1,3 @@
-//---------------------------------------------------------------------------
-//
-// Copyright (c) 2016 Taehyun Rhee, Joshua Scott, Ben Allen
-//
-// This software is provided 'as-is' for assignment of COMP308 in ECS,
-// Victoria University of Wellington, without any express or implied warranty. 
-// In no event will the authors be held liable for any damages arising from
-// the use of this software.
-//
-// The contents of this file may not be copied or duplicated in any form
-// without the prior permission of its owner.
-//
-//----------------------------------------------------------------------------
-
 #pragma once
 
 #include "cgra_math.hpp"
@@ -19,8 +5,13 @@
 
 namespace cgra {
 
-	inline void cgraSphere(float radius, int slices=10, int stacks=10, bool wire=false) {
+	inline void cgraSphere(float radius, int slices = 10, int stacks = 10, bool wire = false) {
 		assert(slices > 0 && stacks > 0 && radius > 0);
+
+		// set wire mode if needed
+		if (wire) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 		int dualslices = slices * 2;
 
 		// precompute sin/cos values for the range of phi
@@ -28,7 +19,7 @@ namespace cgra {
 		std::vector<float> cos_phi_vector;
 
 		for (int slice_count = 0; slice_count <= dualslices; ++slice_count) {
-			float phi = 2 * math::pi() * float(slice_count)/dualslices;
+			float phi = 2 * math::pi() * float(slice_count) / dualslices;
 			sin_phi_vector.push_back(std::sin(phi));
 			cos_phi_vector.push_back(std::cos(phi));
 		}
@@ -38,7 +29,7 @@ namespace cgra {
 		std::vector<vec3> verts;
 
 		for (int stack_count = 0; stack_count <= stacks; ++stack_count) {
-			float theta = math::pi() * float(stack_count)/stacks;
+			float theta = math::pi() * float(stack_count) / stacks;
 			float sin_theta = std::sin(theta);
 			float cos_theta = std::cos(theta);
 
@@ -57,9 +48,9 @@ namespace cgra {
 			glBegin(GL_TRIANGLE_STRIP);
 
 			for (int slice_count = 0; slice_count <= dualslices; ++slice_count) {
-				
-				vec3 &h = verts[slice_count + stack_count*(dualslices+1)];
-				vec3 &l = verts[slice_count + (stack_count+1)*(dualslices+1)];
+
+				vec3 &h = verts[slice_count + stack_count*(dualslices + 1)];
+				vec3 &l = verts[slice_count + (stack_count + 1)*(dualslices + 1)];
 
 				vec3 ph = h*radius;
 				vec3 pl = l*radius;
@@ -73,10 +64,18 @@ namespace cgra {
 
 			glEnd();
 		}
+
+		// reset mode
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	inline void cgraCylinder(float base_radius, float top_radius, float height, int slices=10, int stacks=10, bool wire=false) {
+	inline void cgraCylinder(float base_radius, float top_radius, float height, int slices = 10, int stacks = 10, bool wire = false) {
 		assert(slices > 0 && stacks > 0 && (base_radius > 0 || base_radius > 0) && height > 0);
+
+		// set wire mode if needed
+		if (wire) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 		int dualslices = slices * 2;
 
 		// precompute sin/cos values for the range of phi
@@ -84,7 +83,7 @@ namespace cgra {
 		std::vector<float> cos_phi_vector;
 
 		for (int slice_count = 0; slice_count <= dualslices; ++slice_count) {
-			float phi = 2 * math::pi() * float(slice_count)/dualslices;
+			float phi = 2 * math::pi() * float(slice_count) / dualslices;
 			sin_phi_vector.push_back(std::sin(phi));
 			cos_phi_vector.push_back(std::cos(phi));
 		}
@@ -95,14 +94,14 @@ namespace cgra {
 		std::vector<vec3> norms;
 
 		// thanks ben, you shall forever be immortalized
-		float bens_theta = math::pi()/2 * std::atan((base_radius-top_radius)/height);
+		float bens_theta = math::pi() / 2 * std::atan((base_radius - top_radius) / height);
 		float sin_bens_theta = std::sin(bens_theta);
 		float cos_bens_theta = std::cos(bens_theta);
 
 		for (int stack_count = 0; stack_count <= stacks; ++stack_count) {
-			float t = float(stack_count)/stacks;
+			float t = float(stack_count) / stacks;
 			float z = height * t;
-			float width = base_radius + (top_radius-base_radius) * t;
+			float width = base_radius + (top_radius - base_radius) * t;
 
 			for (int slice_count = 0; slice_count <= dualslices; ++slice_count) {
 				verts.push_back(vec3(
@@ -123,12 +122,12 @@ namespace cgra {
 			glBegin(GL_TRIANGLE_STRIP);
 
 			for (int slice_count = 0; slice_count <= dualslices; ++slice_count) {
-				
-				vec3 &ph = verts[slice_count + stack_count*(dualslices+1)];
-				vec3 &pl = verts[slice_count + (stack_count+1)*(dualslices+1)];
 
-				vec3 &nh = norms[slice_count + stack_count*(dualslices+1)];
-				vec3 &nl = norms[slice_count + (stack_count+1)*(dualslices+1)];
+				vec3 &ph = verts[slice_count + stack_count*(dualslices + 1)];
+				vec3 &pl = verts[slice_count + (stack_count + 1)*(dualslices + 1)];
+
+				vec3 &nh = norms[slice_count + stack_count*(dualslices + 1)];
+				vec3 &nl = norms[slice_count + (stack_count + 1)*(dualslices + 1)];
 
 				glNormal3f(nh.x, nh.y, nh.z);
 				glVertex3f(ph.x, ph.y, ph.z);
@@ -143,8 +142,8 @@ namespace cgra {
 		// cap off the top and bottom of the cylinder
 		if (base_radius > 0) {
 			glBegin(GL_TRIANGLE_FAN);
-			glNormal3f(0,0,-1);
-			glVertex3f(0,0,0);
+			glNormal3f(0, 0, -1);
+			glVertex3f(0, 0, 0);
 
 			for (int slice_count = 0; slice_count <= dualslices; ++slice_count) {
 				vec3 &p = verts[slice_count];
@@ -155,18 +154,21 @@ namespace cgra {
 
 		if (top_radius > 0) {
 			glBegin(GL_TRIANGLE_FAN);
-			glNormal3f(0,0,1);
-			glVertex3f(0,0,height);
+			glNormal3f(0, 0, 1);
+			glVertex3f(0, 0, height);
 
 			for (int slice_count = dualslices; slice_count >= 0; --slice_count) {
-				vec3 &p = verts[slice_count + (stacks)*(dualslices+1)];
+				vec3 &p = verts[slice_count + (stacks)*(dualslices + 1)];
 				glVertex3f(p.x, p.y, p.z);
 			}
 			glEnd();
 		}
+
+		// reset mode
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	inline void cgraCone(float base_radius, float height, int slices=10, int stacks=10, bool wire=false) {
+	inline void cgraCone(float base_radius, float height, int slices = 10, int stacks = 10, bool wire = false) {
 		cgraCylinder(base_radius, 0, height, slices, stacks, wire);
 	}
 }

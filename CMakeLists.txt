@@ -8,31 +8,37 @@ SET(headers
 	"cgra_geometry.hpp"
 	"cgra_math.hpp"
 	"opengl.hpp"
-	"VoronoiHandler.h"
-	"CImg.h"
-	"vVertexPoint.h"
-	"vArc.h"
-	"vEdge.h"
-	"vEvent.h"
+	"simple_shader.hpp"
+	"simple_image.hpp"
 	"geometry.hpp"
+	"vEdge.h"
+	"VoronoiHandler.h"
 	"SimpleGrid.h"
+	"vVertexPoint.h"
+	"CImg.h"
+	"vTriangle.h"
+	"RiverPoint.h"
+	"RiverHandler.h"
 )
 
 
 # TODO list your source files (.cpp) here
 SET(sources
-	"VoronoiHandler.cpp"
-	"DotTest.cpp"
-	"vVertexPoint.cpp"
-	"vArc.cpp"
-	"vEvent.cpp"
-	"vEdge.cpp"
+	"main.cpp"
 	"geometry.cpp"
+	"spotlight.cpp"
+	"vEdge.cpp"
+	"VoronoiHandler.cpp"
 	"SimpleGrid.cpp"
+	"vVertexPoint.cpp"
+	"vTriangle.cpp"
+	"RiverPoint.cpp"
+	"RiverHandler.cpp"
+
 )
 
 # Add executable target and link libraries
 # You do not need to touch this
 add_executable(${CGRA_PROJECT} ${headers} ${sources})
 target_link_libraries(${CGRA_PROJECT} PRIVATE glew glfw ${GLFW_LIBRARIES})
-target_link_libraries(${CGRA_PROJECT} PRIVATE imgui)
+target_link_libraries(${CGRA_PROJECT} PRIVATE stb)

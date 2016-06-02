@@ -3,39 +3,38 @@
 // Constructors/Destructor
 
 vVertexPoint::vVertexPoint() {
-	this->coords = vec2(0, 0);
-	this->zValue = 0.0f;
-	this->edgeNeighbours.clear();
-	this->cellNeighbours.clear();
+	coords = vec2(0, 0);
+	zValue = 0.0f; 
+	edges.clear();
+	neighbours.clear();
 }
 
 vVertexPoint::vVertexPoint(vec2 coords) {
 	this->coords = coords;
-	this->zValue = 0.0f;
-	this->edgeNeighbours.clear();
-	this->cellNeighbours.clear();
+	zValue = 0.0f;
+	edges.clear();
+	neighbours.clear();
 }
 
 vVertexPoint::vVertexPoint(float x, float y) {
 	this->coords = vec2(x, y);
 	this->zValue = 0.0f;
-	this->edgeNeighbours.clear();
-	this->cellNeighbours.clear();
-
+	edges.clear();
+	neighbours.clear();
 }
 
 vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
 	this->coords = coords;
 	this->zValue = zValue;
-	this->edgeNeighbours.clear();
-	this->cellNeighbours.clear();
+	edges.clear();
+	neighbours.clear();
 }
 
 vVertexPoint::vVertexPoint(float x, float y, float zValue) {
 	this->coords = vec2(x, y);
 	this->zValue = zValue;
-	this->edgeNeighbours.clear();
-	this->cellNeighbours.clear();
+	edges.clear();
+	neighbours.clear();
 }
 
 vVertexPoint::~vVertexPoint() {}
@@ -61,18 +60,18 @@ void vVertexPoint::setCoords(float x, float y) {
 	this->coords = vec2(x, y);
 }
 
-vector<vVertexPoint*> vVertexPoint::getEdgeNeighbours() {
-	return this->edgeNeighbours;
+vector<vEdge*> vVertexPoint::getEdges() {
+	return this->edges;
 }
-void vVertexPoint::addEdgeNeighbour(vVertexPoint* neighbour) {
-	this->edgeNeighbours.push_back(neighbour);
+void vVertexPoint::addEdge(vEdge *edge) {
+	this->edges.push_back(edge);
 }
 
-vector<vVertexPoint*> vVertexPoint::getCellNeighbours() {
-	return this->cellNeighbours;
+vector<vVertexPoint*> vVertexPoint::getNeighbours() {
+	return this->neighbours;
 }
-void vVertexPoint::addCellNeighbour(vVertexPoint* neighbour) {
-	this->cellNeighbours.push_back(neighbour);
+void vVertexPoint::addNeighbour(vVertexPoint* neighbour) {
+	this->neighbours.push_back(neighbour);
 }
 
 void vVertexPoint::setExit(bool isExit) {
