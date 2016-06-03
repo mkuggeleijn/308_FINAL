@@ -8,6 +8,7 @@
 #include "cgra_math.hpp"
 #include "cgra_geometry.hpp"
 #include "vEdge.h"
+#include "vTriangle.h"
 
 
 using namespace std;
@@ -20,10 +21,11 @@ class vEdge;
 class vVertexPoint {
 private:
 	vec2 coords;
-	vector<vVertexPoint*> neighbours;
+	//vector<vVertexPoint*> neighbours;
+	vector<vTriangle*> polys;
 	vector<vEdge*> edges;
 	float zValue;
-	bool isExit;
+	bool border;
 
 public:
 	// Constructors/Destructor
@@ -42,10 +44,14 @@ public:
 	void setZValue(float);
 	vector<vEdge*> getEdges();
 	void addEdge(vEdge*);
-	vector<vVertexPoint*> getNeighbours();
-	void addNeighbour(vVertexPoint*);
-	void setExit(bool);
-	bool getExit();
+	void removeEdge(vEdge*);
+	//vector<vVertexPoint*> getNeighbours();
+	//void addNeighbour(vVertexPoint*);
+	vector<vTriangle*> getPolys();
+	void addPoly(vTriangle*);
+	void removePoly(vTriangle*);
+	void setBorder(bool);
+	bool isBorder();
 };
 
 #endif VVERTEXPOINT_H

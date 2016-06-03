@@ -92,10 +92,10 @@ vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 
 }
 
-list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCenters) {
+vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCenters) {
 	list<vTriangle*> newTriangles;
 	list <vTriangle*> badTriangles;
-	list<vTriangle*> finalTriangles;
+	vector<vTriangle*> finalTriangles;
 
 	// add super-triangle (must be large enough to completely contain all the points in pointList)
 	float min = 0.0;
@@ -163,8 +163,13 @@ list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCent
 		if (!checkSuperTri(t, superTri)) finalTriangles.push_back(t);
 	}
 
+	for (vTriangle *t : finalTriangles) {
+		t->updateBorder(); // Mark all vertices that are on the border of the mesh
+	}
+
 	cout << "Total triangles: " << finalTriangles.size() << endl;
-	cout << "Bad triangles: " << badTriangles.size() << endl;
+	cout << "Deleting " << badTriangles.size() << " bad triangles" << endl;
+	badTriangles.clear();
 	return finalTriangles;
 	// return badTriangles;
 }
@@ -218,6 +223,30 @@ bool VoronoiHandler::circumCircle(vVertexPoint *point, vTriangle *triangle) {
 	if (det > 0) return true; // >0 if points are sorted counterclockwise (which they should be, see triangle constructor)
 	else return false;
 }
+
+vector<vVertexPoint*> VoronoiHandler::relaxTriangles(vector<vVertexPoint*> points) {
+
+	for (vVertexPoint *p : points) {
+		// Only relax points that are not on the border. Might need special case for border points
+		if (!p->isBorder()) {
+			// Get centroid
+			float centerX = 0.0;
+			float centerY = 0.0;
+			for (vTriangle *t : p->getPolys()){
+				centerX += t->getCenter()->getCoords().x;
+				centerY += t->getCenter()->getCoords().y;
+			}
+			centerX = centerX / p->getPolys().size();
+			centerY = centerY / p->getPolys().size();
+
+			// move point to half way between current position and centroid;
+			p->setCoords(centerX, centerY);
+		}
+	}
+
+	return points;
+}
+
 
 void VoronoiHandler::generateVPolys(vector<vVertexPoint> *pointCloud) {
 }

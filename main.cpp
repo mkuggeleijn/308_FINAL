@@ -27,7 +27,6 @@
 #include "spotlight.h"
 #include "VoronoiHandler.h"
 #include "CImg.h"
-#include "SimpleGrid.h"
 
 using namespace std;
 using namespace cgra;
@@ -40,7 +39,7 @@ int imageSize = 800;
 int density = 100;
 int radius = 3;
 
-SimpleGrid pointGrid(20);
+// SimpleGrid pointGrid(20);
 
 Image tex2("./work/res/textures/test_heightmap.png");
 // Spotlight
@@ -832,7 +831,7 @@ int main(int argc, char **argv) {
 	cout << "Generating Voronoi Polygons..." << endl;
 	vector<vVertexPoint*> pointCloud = vHandler.generatePointSet(density);
 	//vHandler.generateVPolys(&vpointCloud);
-	list<vTriangle*> triangles = vHandler.generateTriangles(pointCloud);
+	vector<vTriangle*> triangles = vHandler.generateTriangles(pointCloud);
 
 	// vector<vEdge*> edgeSet = vHandler.getEdges();
 

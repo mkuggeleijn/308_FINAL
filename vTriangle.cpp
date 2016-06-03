@@ -1,16 +1,43 @@
 #include "vTriangle.h"
 
 vTriangle::vTriangle(vVertexPoint *center) {
+	border = false;
 	this->center = center;
 	corners.clear();
 	edges.clear();
 	neighbours.clear();
 }
 
+vTriangle::~vTriangle() {
+	// Remove self from all neighbours
+	for (vTriangle* t : neighbours) {
+		t->removeNeighbour(this);
+	}
+	// Remove self from all edges
+	for (vEdge *e : edges) {
+		e->removePoly(this);
+	}
+	// Remove self from all vertices
+	for (vVertexPoint *c : corners) {
+		c->removePoly(this);
+	}
+	// Remove center, it should have no edges at this stage ?????????
+	delete center;
+	
+}
+
+
 vTriangle::vTriangle(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
+	border = false;
 	sortCounterClockwise(v1, v2, v3);
+
+	v1->addPoly(this);
+	v2->addPoly(this);
+	v3->addPoly(this);
+
 	neighbours.clear();
 	edges.clear();
+
 	vEdge *e0 = vEdge::checkDuplicate(v1, v2, this);
 	vEdge *e1 = vEdge::checkDuplicate(v2, v3, this);
 	vEdge *e2 = vEdge::checkDuplicate(v3, v1, this);
@@ -26,23 +53,6 @@ vTriangle::vTriangle(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
 	 
 }
 
-vTriangle::vTriangle(vVertexPoint *center, vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
-	this->center = center;
-
-	sortCounterClockwise(v1, v2, v3);
-
-	edges.clear();
-	vEdge *e0 = vEdge::checkDuplicate(v1, v2, this);
-	vEdge *e1 = vEdge::checkDuplicate(v2, v3, this);
-	vEdge *e2 = vEdge::checkDuplicate(v3, v1, this);
-
-	edges.push_back(e0);
-	edges.push_back(e1);
-	edges.push_back(e2);
-
-	neighbours.clear();
-
-}
 
 void vTriangle::sortCounterClockwise(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
 	vec2 v1v2 = v1->getCoords() - v2->getCoords();
@@ -62,6 +72,24 @@ void vTriangle::sortCounterClockwise(vVertexPoint *v1, vVertexPoint *v2, vVertex
 	}
 
 }
+
+void vTriangle::removeNeighbour(vTriangle *t) {
+	vector<vTriangle*>::iterator itr;
+	itr = find(neighbours.begin(), neighbours.end(), t);
+	if (itr != neighbours.end()) neighbours.erase(itr);
+}
+
+void vTriangle::updateBorder() {  
+	// Triangles are on the border of the mesh if they have an edge with only one poly
+	// Mark all vertices of these edges as border vertices
+	for (vEdge *e : edges) {
+		if (e->polys.size() < 2) {
+			e->v0->setBorder(true);
+			e->v1->setBorder(true);
+		}
+	}
+}
+
 
 vVertexPoint* vTriangle::getCenter() {
 	return center;

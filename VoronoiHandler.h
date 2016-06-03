@@ -51,7 +51,8 @@ public:
 
 	VoronoiHandler();
 	~VoronoiHandler();
-	list<vTriangle*> generateTriangles(vector<vVertexPoint*>);
+	vector<vTriangle*> generateTriangles(vector<vVertexPoint*>);
+	vector<vVertexPoint*> relaxTriangles(vector<vVertexPoint*>);
 	void generateVPolys(vector<vVertexPoint>*);
 	vector<vVertexPoint*> generatePointSet(int);
 	vector<vEdge*> getEdges();
