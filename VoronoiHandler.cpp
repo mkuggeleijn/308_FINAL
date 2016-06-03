@@ -19,17 +19,18 @@ VoronoiHandler::~VoronoiHandler() {
 
 vec2 VoronoiHandler::generatePoint() {
 
-	// pointSet.clear();
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis(0, 1);
-	float x = dis(gen);
-	float y = dis(gen);
-	vec2 point(x, y);
-	return point;
+	//// pointSet.clear();
+	//std::random_device rd;
+	//std::mt19937 gen(rd());
+	//std::uniform_real_distribution<> dis(0, 1);
+	//float x = dis(gen);
+	//float y = dis(gen);
+	//vec2 point(x, y);
+
+	return vec2::random(0.1, 0.4);;
 }
 
-bool VoronoiHandler::sortByX(const vec2 &p1, const vec2 &p2) {
+bool VoronoiHandler::sortByX(const vec2 p1, const vec2 p2) {
 	return p1.x < p2.x;
 }
 
@@ -67,7 +68,7 @@ vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 	std::random_device rd2;
 	std::mt19937 gen1(rd1());
 	std::mt19937 gen2(rd2());
-	std::uniform_real_distribution<> dis(0, 1);
+	std::uniform_real_distribution<> dis(0.0, 1.0);
 	// std::uniform_real_distribution<> disy(0, 1);
 
 	for (int p = 0; p < density; p++) {
@@ -81,7 +82,7 @@ vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 		pointSet.push_back(vPoint);
 	}
 
-	// sort(pointSet.begin(), pointSet.end(),sortByX); // ascending order by X
+	sort(pointSet.begin(), pointSet.end(),sortByX); // ascending order by X
 
 	for (vec2 p : pointSet) {
 		vVertexPoint *v = new vVertexPoint(p.x, p.y);
@@ -97,12 +98,12 @@ list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCent
 	list<vTriangle*> finalTriangles;
 
 	// add super-triangle (must be large enough to completely contain all the points in pointList)
-	float min = -0.1;
-	float max = 2.1;
+	float min = 0.0;
+	float max = 2.0;
 
 	vVertexPoint *superv0 = new vVertexPoint(min, min);
 	vVertexPoint *superv1 = new vVertexPoint(max, min);
-	vVertexPoint *superv2 = new vVertexPoint(max, max);
+	vVertexPoint *superv2 = new vVertexPoint(min, max);
 
 	cout << "Adding Super Triangle" << endl;
 	vTriangle *superTri = new vTriangle(superv0, superv1, superv2);
@@ -111,7 +112,6 @@ list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCent
 	newTriangles.push_back(superTri);
 	
 	// add the points one at a time to the triangulation
-
 	for (vVertexPoint *v : triCenters) {
 		badTriangles.clear();
 		for (vTriangle *t : newTriangles) {
@@ -120,8 +120,6 @@ list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCent
 				badTriangles.push_back(t);
 			}
 		}
-
-
 		vector<vEdge*> holeEdges;
 
 		// find the boundary of the polygonal hole
@@ -147,7 +145,7 @@ list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCent
 
 		// remove bad triangles from the data structure
 		for (vTriangle *t : badTriangles) {
-			//cout << "Removing triangles from bad list"<<endl;
+			//cout << "Removing bad triangle from list"<<endl;
 			newTriangles.remove(t);
 		}
 
@@ -158,33 +156,31 @@ list<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCent
 			newTriangles.push_back(t);
 		}
 	}
+	
+	// if triangle contains a vertex from original super-triangle 	remove triangle from list
+	// Should be okay if make sure random points have some on border
 	for (vTriangle *t : newTriangles) {
-		/*
-		if triangle contains a vertex from original super-triangle
-		remove triangle from triangulation
-		Should be okay if make sure random points have some on border
-		*/
-		bool superMatch = false;
-
-		for (vVertexPoint *v : t->getCorners()) {
-			for (vVertexPoint *tv : t->getCorners()) {
-				if (tv == v) {
-					superMatch = true;
-					//cout << "Found triangle with vertex of super triangle" << endl;
-					break;
-				}
-				if (superMatch) break;
-			}
-			if (superMatch) break;
-		}
-		if (!superMatch) finalTriangles.push_back(t);
+		if (!checkSuperTri(t, superTri)) finalTriangles.push_back(t);
 	}
+
 	cout << "Total triangles: " << finalTriangles.size() << endl;
 	cout << "Bad triangles: " << badTriangles.size() << endl;
-	// return finalTriangles;
-	return badTriangles;
+	return finalTriangles;
+	// return badTriangles;
 }
 
+bool VoronoiHandler::checkSuperTri(vTriangle *t, vTriangle *superTri) {
+
+	for (vVertexPoint *v : t->getCorners()) {
+		for (vVertexPoint *tv : superTri->getCorners()) {
+			if (tv == v) {
+				cout << "Found triangle with vertex of super triangle" << endl;
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 bool VoronoiHandler::circumCircle(vVertexPoint *point, vTriangle *triangle) {
 
@@ -219,7 +215,7 @@ bool VoronoiHandler::circumCircle(vVertexPoint *point, vTriangle *triangle) {
 		(x1 - px), (y1 - py), ((x1sq - pxsq) + (y1sq - pysq)),
 		(x2 - px), (y2 - py), ((x2sq - pxsq) + (y2sq - pysq)));
 
-	if (det < 0) return true; // >0 if points are sorted counterclockwise (which they should be, see triangle constructor)
+	if (det > 0) return true; // >0 if points are sorted counterclockwise (which they should be, see triangle constructor)
 	else return false;
 }
 

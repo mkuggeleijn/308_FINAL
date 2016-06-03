@@ -18,6 +18,12 @@ vTriangle::vTriangle(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
 	edges.push_back(e0);
 	edges.push_back(e1);
 	edges.push_back(e2);
+
+	float centerX = (v1->getCoords().x + v2->getCoords().x + v3->getCoords().x) / 3.0;
+	float centerY = (v1->getCoords().y + v2->getCoords().y + v3->getCoords().y) / 3.0;
+
+	this->center = new vVertexPoint(centerX, centerY);
+	 
 }
 
 vTriangle::vTriangle(vVertexPoint *center, vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
@@ -44,7 +50,7 @@ void vTriangle::sortCounterClockwise(vVertexPoint *v1, vVertexPoint *v2, vVertex
 	float cross = (v1v2.x * v2v3.y) - (v1v2.y * v2v3.x);
 	
 	corners.clear();
-	if (cross > 0.0) { // clockwise, need to be counter-clockwise
+	if (cross < 0.0) { // clockwise, need to be counter-clockwise
 		corners.push_back(v3);
 		corners.push_back(v2);
 		corners.push_back(v1);

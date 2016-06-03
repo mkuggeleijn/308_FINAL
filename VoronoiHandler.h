@@ -42,8 +42,9 @@ private:
 
 
 	vec2 generatePoint();
-	bool sortByX(const vec2&, const vec2&);
+	static bool sortByX(const vec2, const vec2);
 	bool circumCircle(vVertexPoint*, vTriangle*);
+	bool checkSuperTri(vTriangle*, vTriangle*);
 
 
 public:

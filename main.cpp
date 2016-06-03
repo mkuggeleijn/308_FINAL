@@ -37,8 +37,8 @@ using namespace cimg_library;
 VoronoiHandler vHandler;
 
 int imageSize = 800;
-int density = 10;
-int radius = 1;
+int density = 100;
+int radius = 3;
 
 SimpleGrid pointGrid(20);
 
@@ -871,15 +871,21 @@ int main(int argc, char **argv) {
 	*/
 
 	for (vTriangle *t : triangles) {
-
+		cout << t->getCorners().at(0)->getCoords() << " " << t->getCorners().at(1)->getCoords() << " " << t->getCorners().at(2)->getCoords() << endl;
 		for (vEdge *e : t->getEdges()) {
-			cout << "v0: " << e->v0->getCoords() << "\tv1: " << e->v1->getCoords() << endl;
+			//cout << "v0: " << e->v0->getCoords() << "\tv1: " << e->v1->getCoords() << endl;
 			int p0x = e->v0->getCoords().x * (imageSize - 1);
 			int p0y = e->v0->getCoords().y * (imageSize - 1);;
 			int p1x = e->v1->getCoords().x * (imageSize - 1);
 			int p1y = e->v1->getCoords().y * (imageSize - 1);;
 			//if(p0x >= 0 && p0x < imageSize && p0y >= 0 && p0y < imageSize && p1x >= 0 && p1x < imageSize && p1y >= 0 && p1y < imageSize)
-			pointDisplay.draw_line(p0x, p0y, p1x, p1y, cRed);
+			int points[4] = { p0x, p0y, p1x, p1y };
+			for (int p : points) {
+				if (p < 0) p = 0;
+				if (p >(imageSize - 1)) p = (imageSize - 1);
+			}
+
+			pointDisplay.draw_line(points[0], points[1], points[2], points[3], cRed);
 		}
 
 	}
