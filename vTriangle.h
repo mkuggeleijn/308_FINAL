@@ -18,6 +18,7 @@ class vEdge;
 class vTriangle{
 
 private:
+	
 	bool border;
 	vVertexPoint* center;
 	vector<vVertexPoint*> corners;
@@ -43,14 +44,20 @@ public:
 	void setCorners(vector<vVertexPoint*>);
 	void setEdges(vector<vEdge*>);
 	void setNeighbours(vector<vTriangle*>);
-	void removeNeighbour(vTriangle*);
+	
 
 	void addCorner(vVertexPoint*);
 	void addEdge(vEdge*);
 	void addNeighbour(vTriangle*);
 
-	void updateBorder();
+	void removeCorner(vVertexPoint*);
+	void removeEdge(vEdge*);
+	void removeNeighbour(vTriangle*);
 
+	bool updateBorder();
+	void updateCenter();
+
+	bool invalid;
 
 };
 

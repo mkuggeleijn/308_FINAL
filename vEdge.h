@@ -29,6 +29,7 @@ public:
 	static vEdge* checkDuplicate(vVertexPoint*, vVertexPoint*, vTriangle*);
 	void removePoly(vTriangle*);
 	void removeNeighbour(vEdge*);
+	void removeVertex(vVertexPoint*);
 
 
 

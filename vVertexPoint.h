@@ -45,8 +45,6 @@ public:
 	vector<vEdge*> getEdges();
 	void addEdge(vEdge*);
 	void removeEdge(vEdge*);
-	//vector<vVertexPoint*> getNeighbours();
-	//void addNeighbour(vVertexPoint*);
 	vector<vTriangle*> getPolys();
 	void addPoly(vTriangle*);
 	void removePoly(vTriangle*);

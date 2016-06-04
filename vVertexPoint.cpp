@@ -37,7 +37,17 @@ vVertexPoint::vVertexPoint(float x, float y, float zValue) {
 	//neighbours.clear();
 }
 
-vVertexPoint::~vVertexPoint() {} // The only time a vertex would be deleted is if it had no edges
+vVertexPoint::~vVertexPoint() {
+
+	for (vTriangle *p : polys) {
+		p->removeCorner(this);
+	}
+
+	for (vEdge *e : edges) {
+		e->removeVertex(this);
+	}
+
+} 
 
 
 
@@ -45,7 +55,7 @@ void vVertexPoint::removeEdge(vEdge* e) {
 	vector<vEdge*>::iterator itr;
 	itr = find(edges.begin(), edges.end(), e);
 	if (itr != edges.end()) edges.erase(itr);
-	if (edges.size() == 0) delete this; // a vertex can be created without an edge, but can't be left without one.
+	// if (edges.size() == 0) delete this; // a vertex can be created without an edge, but can't be left without one.
 }
 
 // Set/Get
@@ -80,14 +90,7 @@ vector<vTriangle*> vVertexPoint::getPolys() {
 	return this->polys;
 }
 
-/*
-vector<vVertexPoint*> vVertexPoint::getNeighbours() {
-	return this->neighbours;
-}
-void vVertexPoint::addNeighbour(vVertexPoint* neighbour) {
-	this->neighbours.push_back(neighbour);
-}
-*/
+
 void vVertexPoint::addPoly(vTriangle* poly) {
 	this->polys.push_back(poly);
 }
@@ -96,6 +99,7 @@ void vVertexPoint::removePoly(vTriangle* poly) {
 	vector<vTriangle*>::iterator itr;
 	itr = find(polys.begin(), polys.end(), poly);
 	if (itr != polys.end()) polys.erase(itr);
+	// if (polys.size() == 0) delete this;
 }
 
 void vVertexPoint::setBorder(bool border) {

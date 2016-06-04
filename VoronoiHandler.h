@@ -29,32 +29,52 @@ class VoronoiHandler {
 
 private:
 
-	int pointDensity;
+	int density;
+	int relaxPasses = 0;
 	// vector<vec2> pointSet;
-	vector<vVertexPoint*> triCenters;
-	vector<vVertexPoint*> triCorners;
+
+	// Triangle mesh vertices are polygon centers
+	vector<vTriangle*> triangles;
+	vector<vVertexPoint*> triVertices;
 	vector<vEdge*> triEdges;
-	list<vTriangle*> triangles;
+	vector<vTriangle*> borderTris;
+	vector<vTriangle*> relaxedTris;
 
-	vector<vVertexPoint*> polyCenters;
-	vector<vVertexPoint*> polyCorners;
+	// Polygon vertices are triangle centers
+	vector<vTriangle*> polygons;
+	vector<vVertexPoint*> polyVertices;
 	vector<vEdge*> polyEdges;
-
+	vector<vTriangle*> borderPolys;
 
 	vec2 generatePoint();
 	static bool sortByX(const vec2, const vec2);
 	bool circumCircle(vVertexPoint*, vTriangle*);
 	bool checkSuperTri(vTriangle*, vTriangle*);
 
+	vector<vTriangle*> findBorders(vector<vTriangle*>);
+	vector<vVertexPoint*> findCenters(vector<vTriangle*>);
+	vector<vEdge*> findEdges(vector<vTriangle*>);
+
 
 public:
 
 	VoronoiHandler();
+	VoronoiHandler(int);
 	~VoronoiHandler();
 	vector<vTriangle*> generateTriangles(vector<vVertexPoint*>);
-	vector<vVertexPoint*> relaxTriangles(vector<vVertexPoint*>);
-	void generateVPolys(vector<vVertexPoint>*);
+	vector<vVertexPoint*> relaxTriangles(vector<vVertexPoint*>, vector<vTriangle*>);
+	vector<vTriangle*> generateVPolys(vector<vVertexPoint*>);
 	vector<vVertexPoint*> generatePointSet(int);
-	vector<vEdge*> getEdges();
+
+	vector<vTriangle*> getTriangles();
+	vector<vVertexPoint*> getTriVertices();
+	vector<vEdge*> getTriEdges();
+
+	vector<vTriangle*> getPolygons();
+	vector<vVertexPoint*> getPolyVertices();
+	vector<vEdge*> getPolyEdges();
+
+	void changeDensity(int);
+	// void newMesh();
 
 };

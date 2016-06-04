@@ -9,21 +9,27 @@ vTriangle::vTriangle(vVertexPoint *center) {
 }
 
 vTriangle::~vTriangle() {
+
+	//std::cout << "deleting triangle " << this << std::endl;
+
+	// Remove center, it should have no edges at this stage ?????????
+	//delete center;
+
 	// Remove self from all neighbours
 	for (vTriangle* t : neighbours) {
+		//std::cout << "removing neighbour from triangle " << t << std::endl;
 		t->removeNeighbour(this);
-	}
-	// Remove self from all edges
-	for (vEdge *e : edges) {
-		e->removePoly(this);
 	}
 	// Remove self from all vertices
 	for (vVertexPoint *c : corners) {
 		c->removePoly(this);
 	}
-	// Remove center, it should have no edges at this stage ?????????
-	delete center;
-	
+
+	// Remove self from all edges
+	for (vEdge *e : edges) {
+		e->removePoly(this);
+	}
+
 }
 
 
@@ -46,11 +52,25 @@ vTriangle::vTriangle(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
 	edges.push_back(e1);
 	edges.push_back(e2);
 
-	float centerX = (v1->getCoords().x + v2->getCoords().x + v3->getCoords().x) / 3.0;
-	float centerY = (v1->getCoords().y + v2->getCoords().y + v3->getCoords().y) / 3.0;
+	// updateCenter();
+	
+	//float centerX = (v1->getCoords().x + v2->getCoords().x + v3->getCoords().x) / 3.0;
+	// float centerY = (v1->getCoords().y + v2->getCoords().y + v3->getCoords().y) / 3.0;
+	
+	
+	float centerX = 0.0;
+	float centerY = 0.0;
+
+	for (vVertexPoint *p : corners) {
+		centerX += p->getCoords().x;
+		centerY += p->getCoords().y;
+	}
+	centerX = centerX / corners.size();
+	centerY = centerY / corners.size();
+	
 
 	this->center = new vVertexPoint(centerX, centerY);
-	 
+	
 }
 
 
@@ -73,21 +93,53 @@ void vTriangle::sortCounterClockwise(vVertexPoint *v1, vVertexPoint *v2, vVertex
 
 }
 
+void vTriangle::updateCenter() {
+	// cout << "Corner size: " << corners.size() << endl;
+	float centerX = 0.0;
+	float centerY = 0.0;
+
+	for (vVertexPoint *p : corners) {
+		centerX += p->getCoords().x;
+		centerY += p->getCoords().y;
+	}
+	centerX = centerX / corners.size();
+	centerY = centerY / corners.size();
+
+	this->center->setCoords(centerX, centerY);
+}
+
 void vTriangle::removeNeighbour(vTriangle *t) {
 	vector<vTriangle*>::iterator itr;
 	itr = find(neighbours.begin(), neighbours.end(), t);
 	if (itr != neighbours.end()) neighbours.erase(itr);
 }
 
-void vTriangle::updateBorder() {  
+void vTriangle::removeCorner(vVertexPoint *c) {
+	vector<vVertexPoint*>::iterator itr;
+	itr = find(corners.begin(), corners.end(), c);
+	if (itr != corners.end()) corners.erase(itr);
+	//delete this;
+}
+
+void vTriangle::removeEdge(vEdge *e) {
+	vector<vEdge*>::iterator itr;
+	itr = find(edges.begin(), edges.end(), e);
+	if (itr != edges.end()) edges.erase(itr);
+	//delete this;
+}
+
+
+bool vTriangle::updateBorder() {  
 	// Triangles are on the border of the mesh if they have an edge with only one poly
 	// Mark all vertices of these edges as border vertices
 	for (vEdge *e : edges) {
 		if (e->polys.size() < 2) {
 			e->v0->setBorder(true);
 			e->v1->setBorder(true);
+			this->border = true;
 		}
 	}
+	return this->border;
 }
 
 

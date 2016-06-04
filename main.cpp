@@ -33,11 +33,10 @@ using namespace cgra;
 using namespace cimg_library;
 
 
-VoronoiHandler vHandler;
-
-int imageSize = 800;
-int density = 100;
-int radius = 3;
+int imageSize = 600;
+int density = 5;
+int radius = 1;
+int relaxPasses = 0;
 
 // SimpleGrid pointGrid(20);
 
@@ -810,98 +809,120 @@ int main(int argc, char **argv) {
 
 	//CImg stuff
 	CImg<unsigned char> heightMap("./work/res/textures/test_heightmap.pgm");
-	imageSize = heightMap.width();
+	//imageSize = heightMap.width();
 
 	CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
-	pointDisplay.assign("./work/res/textures/test_heightmap.pgm");
-	pointDisplay.channel(3);
+	CImg<unsigned char>  pointDisplay2(imageSize, imageSize, 1, 3, 0);
+
+	//pointDisplay.assign("./work/res/textures/test_heightmap.pgm");
+	// pointDisplay.channel(3);
 
 	const unsigned char cRed[] = { 255,0,0 };
+	const unsigned char cBlue[] = { 0,0,255 };
+	const unsigned char cWhite[] = { 255,255,255 };
+	const unsigned char cYellow[] = { 255,255,0 };
 
-	cout << "Generating Point Set..." << endl;
-	// vector<vVertexPoint> pointCloud = vHandler.generatePointSet(density);
-
-	// vector<vVertexPoint*> pointCloud = pointGrid.getPointCloud();
-
-	//cout << "pointCloud size: " << pointCloud.size() << endl;
-
-	cout << "Loading image..." << endl;
-
+	VoronoiHandler vHandler(density);
 
 	cout << "Generating Voronoi Polygons..." << endl;
-	vector<vVertexPoint*> pointCloud = vHandler.generatePointSet(density);
-	//vHandler.generateVPolys(&vpointCloud);
-	vector<vTriangle*> triangles = vHandler.generateTriangles(pointCloud);
+	//vector<vVertexPoint*> pointCloud = vHandler.generatePointSet(density);
 
-	// vector<vEdge*> edgeSet = vHandler.getEdges();
+	//vector<vTriangle*> triangles = vHandler.generateTriangles(pointCloud);
 
-	//pointCloud = vHandler.generatePointSet(density);
-	// vHandler.generateVPolys(&pointCloud);
+	//vector<vTriangle*> polygons = vHandler.generateVPolys(pointCloud);
 
-	cout << "Drawing Points" << endl;
+	cout << "Drawing "<< vHandler.getTriangles().size() << " triangles" << endl;
 
-	//Get 
+	for (int x = 0; x <= relaxPasses; x++) {
+		cout << endl;
+		if (x == 0 || x == relaxPasses) {
+			for (vTriangle *t : vHandler.getTriangles()) {
+				// Draw center
+				int cx = t->getCenter()->getCoords().x * (imageSize - 1);
+				int cy = t->getCenter()->getCoords().y * (imageSize - 1);
 
-	
-	// Image tex2("./work/res/textures/test_heightmap.png");
-	
-	
+				if (x == 0) pointDisplay.draw_circle(cx, cy, radius, cRed);
+				if (x == relaxPasses && x > 0 ) pointDisplay.draw_circle(cx, cy, radius, cBlue);
 
+				// Just some neighbour-based error checking under here
+				/*
+				for (vVertexPoint *c : t->getCorners()) {
+					cout << "number of polyneighbours of (" << c->getCoords().x * (imageSize - 1) << ",";
+					cout << c->getCoords().y * (imageSize - 1) << "):";
+					cout << ": " << c->getPolys().size() << endl;
 
-	for (vVertexPoint *point : pointCloud) {
+					for (vTriangle *n : c->getPolys()) {
+						cout << "\t" << n << endl;
+						}
+				}
+				*/
 
-		//cout << "point coords: "<< point->getCoords() << endl;
-		int screenX = point->getCoords().x * (imageSize-1);
-		int screenY = point->getCoords().y * (imageSize - 1);
-		/*
-		cout << "Screen coords: (" << screenX << "," << screenY << ")" << endl;
-		cout << "Grid coords: " << point->getCoords()<< endl;
-		cout << "Intensity: " << tex2.getIntensity(screenX, screenY) << endl;
-		*/
-		// draw a red circle
-		pointDisplay.draw_circle(screenX, screenY, radius, cRed, 1);
+				// Draw edges
+				for (vEdge *e : t->getEdges()) {
 
+					int p0x = e->v0->getCoords().x * (imageSize - 1);
+					int p0y = e->v0->getCoords().y * (imageSize - 1);
+					int p1x = e->v1->getCoords().x * (imageSize - 1);
+					int p1y = e->v1->getCoords().y * (imageSize - 1);
+
+					int points[4] = { p0x, p0y, p1x, p1y };				
+
+					if (x == 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cWhite);
+					if (x == relaxPasses && x > 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
+				}
+
+			}
+		}
+		cout << "Number of vertices: " << density << endl << endl;
+		// pointCloud = vHandler.relaxTriangles(pointCloud, triangles);
 	}
 
-	
-	cout << "Drawing "<< triangles.size() << " triangles" << endl;
-	/*
-	cout << "edgeSet size: " << edgeSet.size() << endl;
-	*/
+	cout << "Drawing " << vHandler.getPolygons().size() << "polygons" << endl;
 
-	for (vTriangle *t : triangles) {
-		cout << t->getCorners().at(0)->getCoords() << " " << t->getCorners().at(1)->getCoords() << " " << t->getCorners().at(2)->getCoords() << endl;
+	for (vTriangle *t : vHandler.getPolygons()) {
+		// Draw center
+		int cx = t->getCenter()->getCoords().x * (imageSize - 1);
+		int cy = t->getCenter()->getCoords().y * (imageSize - 1);
+
+		pointDisplay.draw_circle(cx, cy, radius, cBlue);
+		// if (x == 0) pointDisplay.draw_circle(cx, cy, radius, cRed);
+		// if (x == relaxPasses && x > 0) pointDisplay.draw_circle(cx, cy, radius, cBlue);
+
+		// Just some neighbour-based error checking under here
+		/*
+		for (vVertexPoint *c : t->getCorners()) {
+		cout << "number of polyneighbours of (" << c->getCoords().x * (imageSize - 1) << ",";
+		cout << c->getCoords().y * (imageSize - 1) << "):";
+		cout << ": " << c->getPolys().size() << endl;
+
+		for (vTriangle *n : c->getPolys()) {
+		cout << "\t" << n << endl;
+		}
+		}
+		*/
+
+		// Draw edges
 		for (vEdge *e : t->getEdges()) {
-			//cout << "v0: " << e->v0->getCoords() << "\tv1: " << e->v1->getCoords() << endl;
-			int p0x = e->v0->getCoords().x * (imageSize - 1);
-			int p0y = e->v0->getCoords().y * (imageSize - 1);;
-			int p1x = e->v1->getCoords().x * (imageSize - 1);
-			int p1y = e->v1->getCoords().y * (imageSize - 1);;
-			//if(p0x >= 0 && p0x < imageSize && p0y >= 0 && p0y < imageSize && p1x >= 0 && p1x < imageSize && p1y >= 0 && p1y < imageSize)
-			int points[4] = { p0x, p0y, p1x, p1y };
-			for (int p : points) {
-				if (p < 0) p = 0;
-				if (p >(imageSize - 1)) p = (imageSize - 1);
-			}
 
-			pointDisplay.draw_line(points[0], points[1], points[2], points[3], cRed);
+			int p0x = e->v0->getCoords().x * (imageSize - 1);
+			int p0y = e->v0->getCoords().y * (imageSize - 1);
+			int p1x = e->v1->getCoords().x * (imageSize - 1);
+			int p1y = e->v1->getCoords().y * (imageSize - 1);
+
+			int points[4] = { p0x, p0y, p1x, p1y };
+
+			pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
+			// if (x == 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cWhite);
+			// if (x == relaxPasses && x > 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
 		}
 
 	}
 
+	// CImgDisplay draw_disp(pointDisplay, "Raw Mesh"), draw_disp2(pointDisplay2, "Relaxed Mesh");
 
-	CImgDisplay draw_disp(pointDisplay, "Display Points");
+	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
 
-	// Shifting this to inside other while loop
-	// while (!draw_disp.is_closed() && !draw_disp.is_closed()) {
-	//	draw_disp.wait();
-	// }
 
-	// Initialize Geometry/Material/Lights
-	// YOUR CODE GOES HERE
-	// ...
-	// initLight();
-	// initSpotLight();
 	initBoxTexture();
 	initTableTexture();
 	initReflectionMap();
@@ -923,6 +944,7 @@ int main(int argc, char **argv) {
 		// Main Render
 		render(width, height);
 		draw_disp.wait();
+		//draw_disp2.wait();
 		// Swap front and back buffers
 		glfwSwapBuffers(g_window);
 
