@@ -34,8 +34,8 @@ using namespace cimg_library;
 
 
 int imageSize = 600;
-int density = 5;
-int radius = 1;
+int density = 100;
+int radius = 2;
 int relaxPasses = 0;
 
 // SimpleGrid pointGrid(20);
@@ -833,89 +833,41 @@ int main(int argc, char **argv) {
 
 	cout << "Drawing "<< vHandler.getTriangles().size() << " triangles" << endl;
 
-	for (int x = 0; x <= relaxPasses; x++) {
-		cout << endl;
-		if (x == 0 || x == relaxPasses) {
-			for (vTriangle *t : vHandler.getTriangles()) {
-				// Draw center
-				int cx = t->getCenter()->getCoords().x * (imageSize - 1);
-				int cy = t->getCenter()->getCoords().y * (imageSize - 1);
-
-				if (x == 0) pointDisplay.draw_circle(cx, cy, radius, cRed);
-				if (x == relaxPasses && x > 0 ) pointDisplay.draw_circle(cx, cy, radius, cBlue);
-
-				// Just some neighbour-based error checking under here
-				/*
-				for (vVertexPoint *c : t->getCorners()) {
-					cout << "number of polyneighbours of (" << c->getCoords().x * (imageSize - 1) << ",";
-					cout << c->getCoords().y * (imageSize - 1) << "):";
-					cout << ": " << c->getPolys().size() << endl;
-
-					for (vTriangle *n : c->getPolys()) {
-						cout << "\t" << n << endl;
-						}
-				}
-				*/
-
-				// Draw edges
-				for (vEdge *e : t->getEdges()) {
-
-					int p0x = e->v0->getCoords().x * (imageSize - 1);
-					int p0y = e->v0->getCoords().y * (imageSize - 1);
-					int p1x = e->v1->getCoords().x * (imageSize - 1);
-					int p1y = e->v1->getCoords().y * (imageSize - 1);
-
-					int points[4] = { p0x, p0y, p1x, p1y };				
-
-					if (x == 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cWhite);
-					if (x == relaxPasses && x > 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
-				}
-
-			}
-		}
-		cout << "Number of vertices: " << density << endl << endl;
-		// pointCloud = vHandler.relaxTriangles(pointCloud, triangles);
-	}
-
-	cout << "Drawing " << vHandler.getPolygons().size() << "polygons" << endl;
-
-	for (vTriangle *t : vHandler.getPolygons()) {
-		// Draw center
+	// Draw Triangle Centers
+	for (vTriangle *t : vHandler.getTriangles()) {
 		int cx = t->getCenter()->getCoords().x * (imageSize - 1);
 		int cy = t->getCenter()->getCoords().y * (imageSize - 1);
+		pointDisplay.draw_circle(cx, cy, radius, cRed);
+	}
 
-		pointDisplay.draw_circle(cx, cy, radius, cBlue);
-		// if (x == 0) pointDisplay.draw_circle(cx, cy, radius, cRed);
-		// if (x == relaxPasses && x > 0) pointDisplay.draw_circle(cx, cy, radius, cBlue);
+	// Draw Triangle Edges
+	for (vEdge *e : vHandler.getTriEdges()) {
+		int p0x = e->v0->getCoords().x * (imageSize - 1);
+		int p0y = e->v0->getCoords().y * (imageSize - 1);
+		int p1x = e->v1->getCoords().x * (imageSize - 1);
+		int p1y = e->v1->getCoords().y * (imageSize - 1);
 
-		// Just some neighbour-based error checking under here
-		/*
-		for (vVertexPoint *c : t->getCorners()) {
-		cout << "number of polyneighbours of (" << c->getCoords().x * (imageSize - 1) << ",";
-		cout << c->getCoords().y * (imageSize - 1) << "):";
-		cout << ": " << c->getPolys().size() << endl;
+		int points[4] = { p0x, p0y, p1x, p1y };
 
-		for (vTriangle *n : c->getPolys()) {
-		cout << "\t" << n << endl;
-		}
-		}
-		*/
+		pointDisplay.draw_line(points[0], points[1], points[2], points[3], cWhite);
+		if (e->v0->isBorder()) pointDisplay.draw_circle(p0x, p0y, radius, cBlue);
+		if (e->v1->isBorder()) pointDisplay.draw_circle(p1x, p1y, radius, cBlue);
+	}
 
-		// Draw edges
-		for (vEdge *e : t->getEdges()) {
+	cout << "Drawing " << vHandler.getPolygons().size() << " polygons" << endl;
 
-			int p0x = e->v0->getCoords().x * (imageSize - 1);
-			int p0y = e->v0->getCoords().y * (imageSize - 1);
-			int p1x = e->v1->getCoords().x * (imageSize - 1);
-			int p1y = e->v1->getCoords().y * (imageSize - 1);
+	// Draw Polygon Edges
+	for (vEdge *e : vHandler.getPolyEdges()) {
+		int p0x = e->v0->getCoords().x * (imageSize - 1);
+		int p0y = e->v0->getCoords().y * (imageSize - 1);
+		int p1x = e->v1->getCoords().x * (imageSize - 1);
+		int p1y = e->v1->getCoords().y * (imageSize - 1);
 
-			int points[4] = { p0x, p0y, p1x, p1y };
+		int points[4] = { p0x, p0y, p1x, p1y };
 
-			pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
-			// if (x == 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cWhite);
-			// if (x == relaxPasses && x > 0) pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
-		}
-
+		pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
+		// if (e->v0->isBorder()) pointDisplay.draw_circle(p0x, p0y, radius, cBlue);
+		// if (e->v1->isBorder()) pointDisplay.draw_circle(p1x, p1y, radius, cBlue);
 	}
 
 	// CImgDisplay draw_disp(pointDisplay, "Raw Mesh"), draw_disp2(pointDisplay2, "Relaxed Mesh");

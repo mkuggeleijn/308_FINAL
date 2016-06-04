@@ -7,6 +7,7 @@ vVertexPoint::vVertexPoint() {
 	zValue = 0.0f; 
 	edges.clear();
 	//neighbours.clear();
+	border = false;
 }
 
 vVertexPoint::vVertexPoint(vec2 coords) {
@@ -14,6 +15,7 @@ vVertexPoint::vVertexPoint(vec2 coords) {
 	zValue = 0.0f;
 	edges.clear();
 	//neighbours.clear();
+	border = false;
 }
 
 vVertexPoint::vVertexPoint(float x, float y) {
@@ -21,6 +23,7 @@ vVertexPoint::vVertexPoint(float x, float y) {
 	this->zValue = 0.0f;
 	edges.clear();
 	//neighbours.clear();
+	border = false;
 }
 
 vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
@@ -28,6 +31,7 @@ vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
 	this->zValue = zValue;
 	edges.clear();
 	//neighbours.clear();
+	border = false;
 }
 
 vVertexPoint::vVertexPoint(float x, float y, float zValue) {
@@ -35,6 +39,7 @@ vVertexPoint::vVertexPoint(float x, float y, float zValue) {
 	this->zValue = zValue;
 	edges.clear();
 	//neighbours.clear();
+	border = false;
 }
 
 vVertexPoint::~vVertexPoint() {

@@ -19,7 +19,7 @@ VoronoiHandler::VoronoiHandler(int density) {
 	}
 
 	this->polyVertices = findCenters(triangles);
-	this->polygons = generateVPolys(triVertices);
+	this->polygons = generateVPolys(findPolyCenters(triVertices));
 	this->polyEdges = findEdges(polygons);
 	this->borderPolys = findBorders(polygons);
 }
@@ -45,6 +45,15 @@ vector<vVertexPoint*>  VoronoiHandler::findCenters(vector<vTriangle*> polys) {
 	vector<vVertexPoint*> centers;
 	for (vTriangle *p : polys) {
 		centers.push_back(p->getCenter());
+	}
+	return centers;
+}
+
+vector<vVertexPoint*>  VoronoiHandler::findPolyCenters(vector<vVertexPoint*> triVerts) {
+	vector<vVertexPoint*> centers;
+	for (vVertexPoint *v : triVerts) {
+		if (!v->isBorder())
+			centers.push_back(v);
 	}
 	return centers;
 }
@@ -165,7 +174,7 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 	vVertexPoint *superv1 = new vVertexPoint(max, min);
 	vVertexPoint *superv2 = new vVertexPoint(min, max);
 
-	cout << "Adding Super Triangle" << endl;
+	// cout << "Adding Super Triangle" << endl;
 	vTriangle *superTri = new vTriangle(superv0, superv1, superv2);
 	//cout << "SuperTri: " << superTri << endl;
 
@@ -266,11 +275,11 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 }
 
 bool VoronoiHandler::checkSuperTri(vTriangle *t, vTriangle *superTri) {
-	cout << "superTri corners: " << superTri->getCorners().size() << endl;
+	//cout << "superTri corners: " << superTri->getCorners().size() << endl;
 	for (vVertexPoint *v : t->getCorners()) {
 		for (vVertexPoint *tv : superTri->getCorners()) {
 			if (tv == v) {
-				cout << "Found triangle "<< t << "with vertex of super triangle" << endl;
+				//cout << "Found triangle "<< t << "with vertex of super triangle" << endl;
 				return true;
 			}
 		}
@@ -354,33 +363,15 @@ vector<vVertexPoint*> VoronoiHandler::relaxTriangles(vector<vVertexPoint*> point
 }
 
 
-vector<vTriangle*> VoronoiHandler::generateVPolys(vector<vVertexPoint*> pointCloud) {
-
+vector<vTriangle*> VoronoiHandler::generateVPolys(vector<vVertexPoint*> polyCenters) {
 	vector<vTriangle*> triangles;
 
-	for (vVertexPoint *p : pointCloud) {
-		if (!p->isBorder()) {
-			vTriangle *vPoly = new vTriangle(p);
-
-			for (int x = 0; x < p->getPolys().size(); x++) {
-				vTriangle *poly1 = p->getPolys().at(x);
-				vPoly->addCorner(poly1->getCenter());
-
-				vTriangle *poly2;
-				if (x < p->getPolys().size() - 1) {
-					poly2 = p->getPolys().at(x + 1);
-					vPoly->addCorner(poly2->getCenter());
-				}
-				else {
-					poly2 = p->getPolys().at(0);
-				}
-
-				vEdge *edge = vEdge::checkDuplicate(poly1->getCenter(), poly2->getCenter(), vPoly);
-			}
-			triangles.push_back(vPoly);
-		}
-	}
+	for (vVertexPoint *p : polyCenters) {
+		//cout << "Building polygon from " << p->getEdges().size() << " edges..." << endl;
+		vTriangle *vPoly = new vTriangle(p,p->getEdges());
+		//cout << "Created new polygon with " << vPoly->getCorners().size() << " vertices, " << vPoly->getEdges().size() << " edges." << endl;
+		triangles.push_back(vPoly);
+		}	
 	return triangles;
-
 }
 

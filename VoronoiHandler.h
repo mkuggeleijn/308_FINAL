@@ -54,6 +54,7 @@ private:
 	vector<vTriangle*> findBorders(vector<vTriangle*>);
 	vector<vVertexPoint*> findCenters(vector<vTriangle*>);
 	vector<vEdge*> findEdges(vector<vTriangle*>);
+	vector<vVertexPoint*> findPolyCenters(vector<vVertexPoint*>);
 
 
 public:

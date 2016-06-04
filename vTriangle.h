@@ -33,6 +33,7 @@ public:
 
 	vTriangle(vVertexPoint*);
 	vTriangle(vVertexPoint*, vVertexPoint*, vVertexPoint*);
+	vTriangle(vVertexPoint*, vector<vEdge*>);
 	~vTriangle();
 
 	vVertexPoint* getCenter();

@@ -32,6 +32,33 @@ vTriangle::~vTriangle() {
 
 }
 
+vTriangle::vTriangle(vVertexPoint *center, vector<vEdge*> edgelist) {
+	//cout << "Processing " << edgelist.size() << " edges..."<<endl;
+	border = false;
+	this->center = center;
+	for (vEdge *e : edgelist) {
+		if (e->polys.size() != 2) {
+			//cout << "ERROR: This edge has " << e->polys.size() << " poly neighbours!" << endl;
+		} else {
+			//cout << "Finding polycenters..." << endl;
+			vVertexPoint *v0 = e->polys.at(0)->getCenter();
+			vVertexPoint *v1 = e->polys.at(1)->getCenter();
+			//cout << "v0: " << v0 << "\tv1: " << v1 << endl;
+			vEdge *newEdge = vEdge::checkDuplicate(v0, v1, this);
+			edges.push_back(newEdge);
+			if (find(corners.begin(), corners.end(), v0) == corners.end()) {
+				corners.push_back(v0);
+				v0->addPoly(this);
+			}
+				
+			if (find(corners.begin(), corners.end(), v1) == corners.end()) {
+				corners.push_back(v1);
+				v1->addPoly(this);
+			}
+		}
+	}
+}
+
 
 vTriangle::vTriangle(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
 	border = false;
