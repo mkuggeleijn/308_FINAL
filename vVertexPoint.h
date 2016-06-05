@@ -21,7 +21,7 @@ class vEdge;
 class vVertexPoint {
 private:
 	vec2 coords;
-	//vector<vVertexPoint*> neighbours;
+	vTriangle *polyCenter;
 	vector<vTriangle*> polys;
 	vector<vEdge*> edges;
 	float zValue;
@@ -50,6 +50,10 @@ public:
 	void removePoly(vTriangle*);
 	void setBorder(bool);
 	bool isBorder();
+
+	void setPolyCenter(vTriangle*);
+	void removePolyCenter(vTriangle*);
+	vTriangle* getPolyCenter();
 };
 
 #endif VVERTEXPOINT_H

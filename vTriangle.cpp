@@ -3,6 +3,7 @@
 vTriangle::vTriangle(vVertexPoint *center) {
 	border = false;
 	this->center = center;
+	center->setPolyCenter(this);
 	corners.clear();
 	edges.clear();
 	neighbours.clear();
@@ -12,8 +13,9 @@ vTriangle::~vTriangle() {
 
 	//std::cout << "deleting triangle " << this << std::endl;
 
-	// Remove center, it should have no edges at this stage ?????????
-	//delete center;
+	// Remove center if it has no edges
+	center->setPolyCenter(0);
+	//if (center->getEdges().size() == 0) delete center;
 
 	// Remove self from all neighbours
 	for (vTriangle* t : neighbours) {
@@ -36,6 +38,7 @@ vTriangle::vTriangle(vVertexPoint *center, vector<vEdge*> edgelist) {
 	//cout << "Processing " << edgelist.size() << " edges..."<<endl;
 	border = false;
 	this->center = center;
+	center->setPolyCenter(this);
 	for (vEdge *e : edgelist) {
 		if (e->polys.size() != 2) {
 			//cout << "ERROR: This edge has " << e->polys.size() << " poly neighbours!" << endl;
@@ -97,7 +100,7 @@ vTriangle::vTriangle(vVertexPoint *v1, vVertexPoint *v2, vVertexPoint *v3) {
 	
 
 	this->center = new vVertexPoint(centerX, centerY);
-	
+	center->setPolyCenter(this);
 }
 
 
@@ -155,7 +158,9 @@ void vTriangle::removeEdge(vEdge *e) {
 	//delete this;
 }
 
-
+bool vTriangle::isBorder() {
+	return border;
+}
 bool vTriangle::updateBorder() {  
 	// Triangles are on the border of the mesh if they have an edge with only one poly
 	// Mark all vertices of these edges as border vertices
@@ -201,7 +206,7 @@ void vTriangle::addCorner(vVertexPoint *corner) {
 	corners.push_back(corner);
 }
 void vTriangle::addEdge(vEdge *edge) {
-	edges.push_back(edge);
+	edges.push_back(vEdge::checkDuplicate(edge->v0, edge->v1, this));
 }
 void vTriangle::addNeighbour(vTriangle *neighbour) {
 	neighbours.push_back(neighbour);

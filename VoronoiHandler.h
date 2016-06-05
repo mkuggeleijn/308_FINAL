@@ -45,8 +45,10 @@ private:
 	vector<vVertexPoint*> polyVertices;
 	vector<vEdge*> polyEdges;
 	vector<vTriangle*> borderPolys;
+	vector<vVertexPoint*> polyCenters;
 
 	vec2 generatePoint();
+	vector<vec2> makeCornerPoints(float, float);
 	static bool sortByX(const vec2, const vec2);
 	bool circumCircle(vVertexPoint*, vTriangle*);
 	bool checkSuperTri(vTriangle*, vTriangle*);
@@ -55,6 +57,11 @@ private:
 	vector<vVertexPoint*> findCenters(vector<vTriangle*>);
 	vector<vEdge*> findEdges(vector<vTriangle*>);
 	vector<vVertexPoint*> findPolyCenters(vector<vVertexPoint*>);
+	
+	void removeBorderPolys(vector<vTriangle*>);
+	vector<vVertexPoint*> pinToEdges(vector<vVertexPoint*>);
+
+	void rebuildPolyEdges();
 
 
 public:

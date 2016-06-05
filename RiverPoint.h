@@ -12,6 +12,7 @@ class RiverPoint {
 private:
 	bool source;
 	bool exit;
+	float intensity;
 	float water;
 	float width;
 	vVertexPoint *location;
@@ -19,6 +20,7 @@ private:
 
 public:
 	RiverPoint(vVertexPoint*);
+	RiverPoint(vVertexPoint*, float);
 
 	void updateFlow(int);
 

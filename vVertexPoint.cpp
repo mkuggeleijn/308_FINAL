@@ -8,6 +8,7 @@ vVertexPoint::vVertexPoint() {
 	edges.clear();
 	//neighbours.clear();
 	border = false;
+	polyCenter = 0;
 }
 
 vVertexPoint::vVertexPoint(vec2 coords) {
@@ -16,6 +17,7 @@ vVertexPoint::vVertexPoint(vec2 coords) {
 	edges.clear();
 	//neighbours.clear();
 	border = false;
+	polyCenter = 0;
 }
 
 vVertexPoint::vVertexPoint(float x, float y) {
@@ -24,6 +26,7 @@ vVertexPoint::vVertexPoint(float x, float y) {
 	edges.clear();
 	//neighbours.clear();
 	border = false;
+	polyCenter = 0;
 }
 
 vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
@@ -32,6 +35,7 @@ vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
 	edges.clear();
 	//neighbours.clear();
 	border = false;
+	polyCenter = 0;
 }
 
 vVertexPoint::vVertexPoint(float x, float y, float zValue) {
@@ -40,6 +44,7 @@ vVertexPoint::vVertexPoint(float x, float y, float zValue) {
 	edges.clear();
 	//neighbours.clear();
 	border = false;
+	polyCenter = 0;
 }
 
 vVertexPoint::~vVertexPoint() {
@@ -105,6 +110,17 @@ void vVertexPoint::removePoly(vTriangle* poly) {
 	itr = find(polys.begin(), polys.end(), poly);
 	if (itr != polys.end()) polys.erase(itr);
 	// if (polys.size() == 0) delete this;
+}
+
+
+void vVertexPoint::setPolyCenter(vTriangle* poly) {
+	polyCenter = poly;
+}
+void vVertexPoint::removePolyCenter(vTriangle* poly) {
+	polyCenter = 0;
+}
+vTriangle* vVertexPoint::getPolyCenter() {
+	return polyCenter;
 }
 
 void vVertexPoint::setBorder(bool border) {

@@ -8,23 +8,53 @@ VoronoiHandler::VoronoiHandler() {
 
 }
 
+// Constructor
 VoronoiHandler::VoronoiHandler(int density) {
 	this->triVertices = generatePointSet(density);
 	this->triangles = generateTriangles(triVertices);
 	this->triEdges = findEdges(triangles);
 	this->borderTris = findBorders(triangles);
 
-	for (int x = 0; x < relaxPasses; x++) {
-		this->triVertices = relaxTriangles(this->triVertices, this->triangles);
-	}
-
 	this->polyVertices = findCenters(triangles);
-	this->polygons = generateVPolys(findPolyCenters(triVertices));
+	this->polyCenters = findPolyCenters(triVertices);
+	this->polygons = generateVPolys(polyCenters);
 	this->polyEdges = findEdges(polygons);
 	this->borderPolys = findBorders(polygons);
+
+	pinToEdges(polyVertices);
+
+	// adjust centers - not working
+	for (vTriangle *p : polygons) {
+		p->updateCenter();
+	}
+
+	for (int x = 0; x < relaxPasses; x++) {
+		this->polyVertices = relaxTriangles(this->polyVertices, this->polygons);
+	}
+
+	//removeBorderPolys(borderTris);
 }
 
+// Destructor
 VoronoiHandler::~VoronoiHandler() {
+	for (vTriangle* t : triangles) {
+		delete t;
+	}
+
+	for (vEdge *e : triEdges) {
+		delete e;
+	}
+	for (vVertexPoint *v : triVertices) {
+		delete v;
+	}
+
+	for (vTriangle* t : polygons) {
+		delete t;
+	}
+
+	for (vEdge *e : polyEdges) {
+		delete e;
+	}
 
 }
 
@@ -122,18 +152,20 @@ vector<vEdge*> VoronoiHandler::getPolyEdges() {
 	return polyEdges;
 }
 
+// Generate (density) random points in a normal distribution
 vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
-
-	vector<vec2> pointSet;
+	float max = 1.0;
+	float min = 0.0;
+	vector<vec2> pointSet = makeCornerPoints(max, min);
 	vector<vVertexPoint*> vertexSet;
 	
-	pointSet.clear();
+	// pointSet.clear();
 
 	std::random_device rd1;
 	std::random_device rd2;
 	std::mt19937 gen1(rd1());
 	std::mt19937 gen2(rd2());
-	std::uniform_real_distribution<> dis(0.0, 1.0);
+	std::uniform_real_distribution<> dis(min,max);
 	// std::uniform_real_distribution<> disy(0, 1);
 
 	for (int p = 0; p < density; p++) {
@@ -157,6 +189,49 @@ vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 
 }
 
+// Make a set of points that defines four triangles centered around each corner of a square (0.0->0.1)
+vector<vec2> VoronoiHandler::makeCornerPoints(float max, float min) {
+	vector<vec2> pointSet;
+
+	// First make corner points
+	float cornerSize = 0.01;
+
+	vec2 t0v1(min + cornerSize, min + cornerSize);
+	vec2 t0v0(min - cornerSize, min + cornerSize);
+	vec2 t0v2(min, min - cornerSize);
+
+	vec2 t1v1(max + cornerSize, min + cornerSize);
+	vec2 t1v0(max - cornerSize, min + cornerSize);
+	vec2 t1v2(max, min - cornerSize);
+
+	vec2 t2v1(min + cornerSize, max - cornerSize);
+	vec2 t2v0(min - cornerSize, max - cornerSize);
+	vec2 t2v2(min, max + cornerSize);
+
+	vec2 t3v1(max + cornerSize, max - cornerSize);
+	vec2 t3v0(max - cornerSize, max - cornerSize);
+	vec2 t3v2(max, max + cornerSize);
+
+	pointSet.push_back(t0v0);
+	pointSet.push_back(t0v1);
+	pointSet.push_back(t0v2);
+
+	pointSet.push_back(t1v0);
+	pointSet.push_back(t1v1);
+	pointSet.push_back(t1v2);
+
+	pointSet.push_back(t2v0);
+	pointSet.push_back(t2v1);
+	pointSet.push_back(t2v2);
+
+	pointSet.push_back(t3v0);
+	pointSet.push_back(t3v1);
+	pointSet.push_back(t3v2);
+
+	return pointSet;
+}
+
+// Generate a triangle mesh from a set of points
 vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCenters) {
 	list<vTriangle*> newTriangles;
 	list <vTriangle*> badTriangles;
@@ -166,9 +241,10 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 	vector<vEdge*> badEdges;
 	vector<vVertexPoint*> badCorners;
 
+
 	// add super-triangle (must be large enough to completely contain all the points in pointList)
-	float min = 0.0;
-	float max = 2.0;
+	float min = -0.1;
+	float max = 2.1;
 
 	vVertexPoint *superv0 = new vVertexPoint(min, min);
 	vVertexPoint *superv1 = new vVertexPoint(max, min);
@@ -274,6 +350,7 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 	return finalTriangles;
 }
 
+// Check if a triangle shares a vertex with the super triangle (or any really)
 bool VoronoiHandler::checkSuperTri(vTriangle *t, vTriangle *superTri) {
 	//cout << "superTri corners: " << superTri->getCorners().size() << endl;
 	for (vVertexPoint *v : t->getCorners()) {
@@ -287,6 +364,7 @@ bool VoronoiHandler::checkSuperTri(vTriangle *t, vTriangle *superTri) {
 	return false;
 }
 
+// Check if a point lies on the CircumCircle of a triangle
 bool VoronoiHandler::circumCircle(vVertexPoint *point, vTriangle *triangle) {
 
 	// First make a matrix from the triangle verticies
@@ -324,12 +402,20 @@ bool VoronoiHandler::circumCircle(vVertexPoint *point, vTriangle *triangle) {
 	else return false;
 }
 
+// Make a triangle mesh more regular
 vector<vVertexPoint*> VoronoiHandler::relaxTriangles(vector<vVertexPoint*> points, vector<vTriangle*> polys) {
-	//int borderCount = 0;
+	float minV = 0.0;
+	float maxV = 1.0;
+
+	vec2 c0(minV, minV);
+	vec2 c1(maxV, minV);
+	vec2 c2(minV, maxV);
+	vec2 c3(maxV, maxV);
+
 	for (vVertexPoint *p : points) {
 		// Only relax points that are not on the border. Might need special case for border points
 		
-		//if (!p->isBorder()) {
+		
 			// Get centroid
 			float centerX = 0.0;
 			float centerY = 0.0;
@@ -345,12 +431,29 @@ vector<vVertexPoint*> VoronoiHandler::relaxTriangles(vector<vVertexPoint*> point
 			// move point to half way between current position and centroid;
 			float newX = (centerX - p->getCoords().x) / 2;
 			float newY = (centerY - p->getCoords().y) / 2;
-			p->setCoords(newX, newY);
+			/*
+			if (newX > maxV) newX = maxV;
+			if (newX < minV) newX = minV;
+			if (newY > maxV) newY = maxV;
+			if (newY < minV) newY = minV;
+			*/
+			if (!p->isBorder()) {
+				p->setCoords(newX, newY);
+			}
+			else {
+				vec2 pc = p->getCoords();
+				if (!(pc == c0 || pc == c1 || pc == c2 || pc == c3)) {
 
-			
-		//} else {
-		//	borderCount++;
-		//}
+					if (pc.x == minV || pc.x == maxV) {
+						p->setCoords(pc.x, newY);
+					}
+					if (pc.y == minV || pc.y == maxV) {
+						p->setCoords(newX, pc.y);
+					}
+				}
+			}
+
+
 	}
 
 	// Update the poly centers now the vertices have moved
@@ -362,7 +465,7 @@ vector<vVertexPoint*> VoronoiHandler::relaxTriangles(vector<vVertexPoint*> point
 	return points;
 }
 
-
+// Generate Voronoi Polygons from a triangle mesh
 vector<vTriangle*> VoronoiHandler::generateVPolys(vector<vVertexPoint*> polyCenters) {
 	vector<vTriangle*> triangles;
 
@@ -375,3 +478,88 @@ vector<vTriangle*> VoronoiHandler::generateVPolys(vector<vVertexPoint*> polyCent
 	return triangles;
 }
 
+// Given a polygon mesh, move all border vertices to the edges (range 0-1)
+vector<vVertexPoint*> VoronoiHandler::pinToEdges(vector<vVertexPoint*> points) {
+	
+	float minV = 0.0;
+	float maxV = 1.0;
+
+	vec2 c0(minV, minV);
+	vec2 c1(maxV, minV);
+	vec2 c2(minV, maxV);
+	vec2 c3(maxV, maxV);
+
+	// Move border points to edges
+	for (vVertexPoint* p : points) {
+		if (p->isBorder()) {
+			vec2 pc = p->getCoords();
+			// If not one of the corner points
+			if (!(pc == c0 || pc == c1 || pc == c2 || pc == c3)) {
+				float px = p->getCoords().x;
+				float py = p->getCoords().y;
+
+				float farX = abs(maxV - px);
+				float farY = abs(maxV - py);
+
+				float dx = min(farX, px);
+				float dy = min(farY, py);
+
+				if (dx < dy) {
+					if (farX < px) pc.x += dx;
+					else pc.x -= dx;
+				}
+				else {
+					if (farY < py) pc.y += dy;
+					else pc.y -= dy;
+				}
+				p->setCoords(pc);
+			}
+
+		}
+
+	}
+
+	return points;
+}
+
+void VoronoiHandler::rebuildPolyEdges() {
+
+	for (vEdge *e : polyEdges) {
+		delete e;
+	}
+
+	for (vTriangle *p : polygons) {
+
+	}
+
+}
+
+void VoronoiHandler::removeBorderPolys(vector<vTriangle*> polys){
+
+	vector<vEdge*> badEdges;
+	vector<vVertexPoint*> badCorners;
+
+	// Delete all border polys, mark edges & vertices for check
+	for (vTriangle *p : polys) {
+		for (vEdge *e : p->getEdges()) {
+			if (find(badEdges.begin(), badEdges.end(), e) == badEdges.end())
+				badEdges.push_back(e);
+		}
+
+		for (vVertexPoint *c : p->getCorners()) {
+			if (find(badCorners.begin(), badCorners.end(), c) == badCorners.end())
+				badCorners.push_back(c);
+		}
+		delete p;
+	}
+
+	// Delete all edges that go to border points
+	for (vEdge *e : badEdges) {
+		if (e->v0->isBorder() || e->v1->isBorder()) delete e;
+	}
+
+	// Delete all corners that are border points
+	for (vVertexPoint *p : badCorners) {
+		if (p->isBorder()) delete p;
+	}
+}

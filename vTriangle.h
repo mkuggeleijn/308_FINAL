@@ -55,6 +55,7 @@ public:
 	void removeEdge(vEdge*);
 	void removeNeighbour(vTriangle*);
 
+	bool isBorder();
 	bool updateBorder();
 	void updateCenter();
 

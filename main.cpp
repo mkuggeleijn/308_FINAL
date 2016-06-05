@@ -34,7 +34,7 @@ using namespace cimg_library;
 
 
 int imageSize = 600;
-int density = 100;
+int density = 200;
 int radius = 2;
 int relaxPasses = 0;
 
@@ -837,10 +837,12 @@ int main(int argc, char **argv) {
 	for (vTriangle *t : vHandler.getTriangles()) {
 		int cx = t->getCenter()->getCoords().x * (imageSize - 1);
 		int cy = t->getCenter()->getCoords().y * (imageSize - 1);
-		pointDisplay.draw_circle(cx, cy, radius, cRed);
+		if (t->getCenter()->isBorder()) pointDisplay.draw_circle(cx, cy, radius, cBlue);
+		else pointDisplay.draw_circle(cx, cy, radius, cRed);
 	}
-
+	
 	// Draw Triangle Edges
+	/*
 	for (vEdge *e : vHandler.getTriEdges()) {
 		int p0x = e->v0->getCoords().x * (imageSize - 1);
 		int p0y = e->v0->getCoords().y * (imageSize - 1);
@@ -853,7 +855,7 @@ int main(int argc, char **argv) {
 		if (e->v0->isBorder()) pointDisplay.draw_circle(p0x, p0y, radius, cBlue);
 		if (e->v1->isBorder()) pointDisplay.draw_circle(p1x, p1y, radius, cBlue);
 	}
-
+	*/
 	cout << "Drawing " << vHandler.getPolygons().size() << " polygons" << endl;
 
 	// Draw Polygon Edges

@@ -4,6 +4,10 @@ RiverPoint::RiverPoint(vVertexPoint *location) {
 	this->location = location;
 }
 
+RiverPoint::RiverPoint(vVertexPoint *location, float intensity) {
+	this->location = location;
+	this->intensity = intensity;
+}
 
 void RiverPoint::updateFlow(int flow) {
 	water += flow;
