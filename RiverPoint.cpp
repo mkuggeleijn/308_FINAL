@@ -2,6 +2,7 @@
 
 RiverPoint::RiverPoint(vVertexPoint *location) {
 	this->location = location;
+	water = 1;
 }
 
 RiverPoint::RiverPoint(vVertexPoint *location, float intensity) {
@@ -44,15 +45,20 @@ void RiverPoint::setSource(bool source) {
 void RiverPoint::setExit(bool exit) {
 	this->exit = exit;
 }
-void RiverPoint::setWater(float) {
+void RiverPoint::setWater(int water) {
 	this->water = water;
 }
-void RiverPoint::setWidth(float) {
+
+void RiverPoint::addWater(int water) {
+	this->water += water;
+}
+
+void RiverPoint::setWidth(float width) {
 	this->width = width;
 }
-void RiverPoint::setLocation(vVertexPoint *) {
+void RiverPoint::setLocation(vVertexPoint *location) {
 	this->location = location;
 }
-void RiverPoint::setDownstream(RiverPoint *) {
+void RiverPoint::setDownstream(RiverPoint *location) {
 	this->downstream = downstream;
 }

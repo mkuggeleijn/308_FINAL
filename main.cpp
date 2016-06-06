@@ -25,18 +25,19 @@
 #include "simple_shader.hpp"
 #include "opengl.hpp"
 #include "spotlight.h"
-#include "VoronoiHandler.h"
+#include "RiverHandler.h"
 #include "CImg.h"
 
 using namespace std;
 using namespace cgra;
 using namespace cimg_library;
 
-
+/*
 int imageSize = 600;
 int density = 200;
 int radius = 2;
 int relaxPasses = 0;
+*/
 
 // SimpleGrid pointGrid(20);
 
@@ -808,32 +809,31 @@ int main(int argc, char **argv) {
 	}
 
 	//CImg stuff
-	CImg<unsigned char> heightMap("./work/res/textures/test_heightmap.pgm");
+	//CImg<unsigned char> heightMap("./work/res/textures/test_heightmap.pgm");
 	//imageSize = heightMap.width();
 
-	CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
-	CImg<unsigned char>  pointDisplay2(imageSize, imageSize, 1, 3, 0);
+	//CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
+	//CImg<unsigned char>  pointDisplay2(imageSize, imageSize, 1, 3, 0);
 
 	//pointDisplay.assign("./work/res/textures/test_heightmap.pgm");
 	// pointDisplay.channel(3);
-
+	/*
 	const unsigned char cRed[] = { 255,0,0 };
 	const unsigned char cBlue[] = { 0,0,255 };
 	const unsigned char cWhite[] = { 255,255,255 };
 	const unsigned char cYellow[] = { 255,255,0 };
+	*/
+	// VoronoiHandler vHandler(density);
 
-	VoronoiHandler vHandler(density);
-
-	cout << "Generating Voronoi Polygons..." << endl;
+	//cout << "Generating Voronoi Polygons..." << endl;
 	//vector<vVertexPoint*> pointCloud = vHandler.generatePointSet(density);
 
 	//vector<vTriangle*> triangles = vHandler.generateTriangles(pointCloud);
-
 	//vector<vTriangle*> polygons = vHandler.generateVPolys(pointCloud);
-
-	cout << "Drawing "<< vHandler.getTriangles().size() << " triangles" << endl;
+	//cout << "Drawing "<< vHandler.getTriangles().size() << " triangles" << endl;
 
 	// Draw Triangle Centers
+	/*
 	for (vTriangle *t : vHandler.getTriangles()) {
 		int cx = t->getCenter()->getCoords().x * (imageSize - 1);
 		int cy = t->getCenter()->getCoords().y * (imageSize - 1);
@@ -856,6 +856,7 @@ int main(int argc, char **argv) {
 		if (e->v1->isBorder()) pointDisplay.draw_circle(p1x, p1y, radius, cBlue);
 	}
 	*/
+	/*
 	cout << "Drawing " << vHandler.getPolygons().size() << " polygons" << endl;
 
 	// Draw Polygon Edges
@@ -875,7 +876,11 @@ int main(int argc, char **argv) {
 	// CImgDisplay draw_disp(pointDisplay, "Raw Mesh"), draw_disp2(pointDisplay2, "Relaxed Mesh");
 
 	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
+	*/
 
+
+
+	RiverHandler rHandler;
 
 	initBoxTexture();
 	initTableTexture();
@@ -891,13 +896,15 @@ int main(int argc, char **argv) {
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(g_window)) {
 
+		rHandler.drawAll();
+
 		// Make sure we draw to the WHOLE window
 		int width, height;
 		glfwGetFramebufferSize(g_window, &width, &height);
 
 		// Main Render
 		render(width, height);
-		draw_disp.wait();
+		//draw_disp.wait();
 		//draw_disp2.wait();
 		// Swap front and back buffers
 		glfwSwapBuffers(g_window);

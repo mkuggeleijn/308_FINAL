@@ -54,6 +54,8 @@ public:
 	void setPolyCenter(vTriangle*);
 	void removePolyCenter(vTriangle*);
 	vTriangle* getPolyCenter();
+
+	vec2 screenCoords;
 };
 
 #endif VVERTEXPOINT_H

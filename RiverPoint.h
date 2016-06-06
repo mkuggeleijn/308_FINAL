@@ -13,7 +13,7 @@ private:
 	bool source;
 	bool exit;
 	float intensity;
-	float water;
+	int water;
 	float width;
 	vVertexPoint *location;
 	RiverPoint *downstream;
@@ -33,7 +33,8 @@ public:
 
 	void setSource(bool);
 	void setExit(bool);
-	void setWater(float);
+	void setWater(int);
+	void addWater(int);
 	void setWidth(float);
 	void setLocation(vVertexPoint *);
 	void setDownstream(RiverPoint *);

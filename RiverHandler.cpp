@@ -1,40 +1,193 @@
 #include "RiverHandler.h"
 
-RiverHandler::RiverHandler(int numberOfRivers, int waterLevel, int widthFactor) {
-	this->numberOfRivers = numberOfRivers;
-	this->waterLevel = waterLevel;
-	this->widthFactor = widthFactor;
-	//riverSources = generateRivers(numberOfRivers);
+
+RiverHandler::RiverHandler() {
+	
+	graph = VoronoiHandler(density);
+	this -> riverPoints = sampleImage(heightMap);
+	this -> riverSources = findSourceCandidates(riverPoints);
+	graph.setScreenCoords(imageSize);
+
 }
 
-RiverHandler::RiverHandler(Image heightMap, vector<vVertexPoint*> pointCloud) {
-	
-	imageSize = 1024; // This needs to be changed
+struct sortByZ {
+	bool operator()(vVertexPoint *p1, vVertexPoint *p2) const {
+		return p1->getZValue() > p2->getZValue();
+	}
+};
 
-	this->heightMap = heightMap;
+// Sample intensity of heightmap and add data to polygon graph
+vector<vVertexPoint*> RiverHandler::sampleImage(Image heightMap) {
+	vector<vVertexPoint*> riverPoints;
 
-
-	vector<RiverPoint*> potentials;
-	vector<RiverPoint*> candidates;
-
-	for (vVertexPoint *p : pointCloud) {
+	for (vVertexPoint* p : graph.getPolyVertices()) {
 		int screenX = p->getCoords().x * (imageSize - 1);
 		int screenY = p->getCoords().y * (imageSize - 1);
-		float intensity;
 
-		if (screenX < 0 || screenX >= imageSize || screenY < 0 || screenY >= imageSize)
-			intensity = 0.0f;
-		else intensity = heightMap.getIntensity(screenX, screenY);
+		p->screenCoords.x = screenX;
+		p->screenCoords.y = screenY;
 
-		RiverPoint *r = new RiverPoint(p, intensity);
-
-		potentials.push_back(r);
-		if (intensity > cutoff) candidates.push_back(r);
+		p->setZValue(heightMap.getIntensity(screenX, screenY));
+		riverPoints.push_back(p);
 	}
-	// cout << "Intensity: " << tex2.getIntensity(screenX, screenY) << endl;
+	sort(riverPoints.begin(), riverPoints.end(), sortByZ());
+	return riverPoints;
+}
 
-	// Now sort list by intensity and add the cutoffPercent to the sources list.
+vector<vVertexPoint*>RiverHandler::findSourceCandidates(vector<vVertexPoint*> riverPoints) {
 
+	vector<vVertexPoint*>riverSources;
 
+	int cutPercent = cutoffPercent;
+	int riverCount = 0;
+
+	std::random_device rd1;
+	std::mt19937 gen1(rd1());
+
+	while (riverSources.size() != numberOfRivers) {
+		int	riverLimit = riverPoints.size() * (cutPercent / 100);
+		std::uniform_real_distribution<> dis(0, riverLimit -1);
+		for (int x = 0; x < riverLimit; x++) {
+			int n = dis(gen1);
+			if(find(riverSources.begin(), riverSources.end(), riverPoints.at(n)) == riverSources.end())
+				riverSources.push_back(riverPoints.at(n));
+		}
+		if (riverSources.size() != numberOfRivers) cutPercent += 10;
+	}
+
+	return riverSources;
+}
+
+vector<vector<RiverPoint*>> RiverHandler::makeRivers(int numberOfRivers, vector<vVertexPoint*> riverSources) {
+	vector<vVertexPoint*> starts;
+	vector<vector<RiverPoint*>> rivers;
+
+	std::random_device rd1;
+	std::mt19937 gen1(rd1());
+	std::uniform_real_distribution<> dis(0, riverSources.size()-1);
+
+	for (int x = 0; x < numberOfRivers; x++) {
+		int n = dis(gen1);
+		if (find(starts.begin(), starts.end(), riverSources.at(n)) == starts.end()) {
+			starts.push_back(riverSources.at(n));
+			rivers.push_back(makeRiverPath(riverSources.at(n)));
+		}
+	}
+
+	return rivers;
+}
+
+vector<RiverPoint*> RiverHandler::makeRiverPath(vVertexPoint* source) {
+
+	vector<RiverPoint*> river;
+
+	RiverPoint *riverHead = new RiverPoint(source);
+	riverHead = getNextRiverPoint(riverHead);
+
+	RiverPoint *r = riverHead;
+	while (!r->isExit()) {
+		river.push_back(r);
+		r = r->getDownstream();
+	}
+	river.push_back(r);
+
+	return river;
+}
+
+RiverPoint* RiverHandler::getNextRiverPoint(RiverPoint *parent) {
+	vVertexPoint *location = parent->getLocation();
+	
+	vVertexPoint *lowest = location;
+	for (vEdge* e : location->getEdges()) {
+		vVertexPoint *end;
+		if (e->v0 == location) end = e->v1;
+		else end = e->v0;
+		if (end->getZValue() < lowest->getZValue())
+			lowest = end;
+	}
+	if (lowest == location) lowest = dealWithLocalMin(parent);
+
+	RiverPoint *child = new RiverPoint(lowest);
+	int waterAdd = parent->getWater() + ((distance(child->getLocation()->getCoords(), parent->getLocation()->getCoords())) * 100);
+	child->setWater(waterAdd);
+
+	if (lowest->isBorder()) {
+		child->setExit(true);
+		return child;
+	}
+
+	return(getNextRiverPoint(child));
+
+}
+
+vVertexPoint* RiverHandler::dealWithLocalMin(RiverPoint* parent) {
+	vVertexPoint *location = parent->getLocation();
+	vVertexPoint *lowest;
+	for (int x = 0; x < location->getEdges().size(); x++) {
+		vEdge *e = location->getEdges().at(x);
+		vVertexPoint *end;
+		if (e->v0 == location) end = e->v1;
+		else end = e->v0;
+		if (x = 0) lowest = end;
+		else if (end->getZValue() < lowest->getZValue()) lowest = end;
+	}
+	return lowest;
+}
+
+void RiverHandler::drawAll() {
+	//CImg stuff, needed for testing
+	const unsigned char cRed[] = { 255,0,0 };
+	const unsigned char cBlue[] = { 0,0,255 };
+	const unsigned char cWhite[] = { 255,255,255 };
+	const unsigned char cGrey[] = { 127,127,127 };
+	const unsigned char cYellow[] = { 255,255,0 };
+
+	CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
+
+	int radius = 2;
+
+	drawEdges(graph.getPolyEdges(), &pointDisplay, cWhite);
+	drawPoints(graph.getPolyVertices(), &pointDisplay, cGrey,radius);
+	drawRivers(rivers, &pointDisplay, cRed,radius);
+
+	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
+
+	draw_disp.wait();
+
+}
+
+void RiverHandler::drawEdges(vector<vEdge*> edges, CImg<unsigned char> *pointDisplay, const unsigned char color[]) {
+	for (vEdge *e : edges) {
+		int p0x = e->v0->screenCoords.x;
+		int p0y = e->v0->screenCoords.y;
+		int p1x = e->v1->screenCoords.x;
+		int p1y = e->v1->screenCoords.y;
+
+		int points[4] = { p0x, p0y, p1x, p1y };
+
+		pointDisplay->draw_line(points[0], points[1], points[2], points[3], color);
+	}
+}
+void RiverHandler::drawPoints(vector<vVertexPoint*> points, CImg<unsigned char> *pointDisplay, const unsigned char color[], int radius) {
+	for (vVertexPoint* p : points) {
+		pointDisplay->draw_circle(p->screenCoords.x, p->screenCoords.y, radius, color);
+	}
+
+}
+void RiverHandler::drawRivers(vector<vector<RiverPoint*>> riverSet, CImg<unsigned char> *pointDisplay, const unsigned char color[], int radius) {
+	for (vector<RiverPoint*> river : riverSet) {
+		RiverPoint *r = river.at(0);
+		while (!r->isExit()){
+			int p0x = r->getLocation()->screenCoords.x;
+			int p0y = r->getLocation()->screenCoords.y;
+			int p1x = r->getDownstream()->getLocation()->screenCoords.x;
+			int p1y = r->getDownstream()->getLocation()->screenCoords.y;
+
+			int points[4] = { p0x, p0y, p1x, p1y };
+			pointDisplay->draw_line(points[0], points[1], points[2], points[3], color);
+			pointDisplay->draw_circle(p0x, p0y, radius, color);
+			pointDisplay->draw_circle(p1x, p1y, radius, color);
+		}
+	}
 
 }

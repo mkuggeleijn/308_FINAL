@@ -82,7 +82,10 @@ public:
 	vector<vVertexPoint*> getPolyVertices();
 	vector<vEdge*> getPolyEdges();
 
+	void setScreenCoords(int);
+
 	void changeDensity(int);
+	
 	// void newMesh();
 
 };

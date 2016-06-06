@@ -131,6 +131,21 @@ struct pointer_values_equal
 // Public
 // ############################################################
 
+
+void VoronoiHandler::setScreenCoords(int imageSize) {
+	for (vVertexPoint * p : triVertices) {
+		int x = p->getCoords().x * (imageSize - 1);
+		int y = p->getCoords().y * (imageSize - 1);
+		p->screenCoords = vec2(x, y);
+	}
+
+	for (vVertexPoint * p : polyVertices) {
+		int x = p->getCoords().x * (imageSize - 1);
+		int y = p->getCoords().y * (imageSize - 1);
+		p->screenCoords = vec2(x, y);
+	}
+}
+
 vector<vTriangle*> VoronoiHandler::getTriangles() {
 	return this->triangles;
 }
