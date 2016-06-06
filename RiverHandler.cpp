@@ -3,11 +3,22 @@
 
 RiverHandler::RiverHandler() {
 	
-	graph = VoronoiHandler(density);
+	this -> graph = new VoronoiHandler(density);
+	graph -> setScreenCoords(imageSize);
 	this -> riverPoints = sampleImage(heightMap);
 	this -> riverSources = findSourceCandidates(riverPoints);
-	graph.setScreenCoords(imageSize);
 
+
+	//Some debug stuff under here
+	/*
+	for (vTriangle* t : graph->getTriangles()) {
+		cout << "Triangle " << t << " with " << t->getEdges().size() << " edges, and " << t->getCorners().size() << " corners." << endl;
+		for (vVertexPoint *c : t->getCorners()) {
+			cout << "\tCoords: " << c->getCoords();
+			cout << "\tScreenCoords: " << c->screenCoords << endl;
+		}
+	}
+	*/
 }
 
 struct sortByZ {
@@ -20,7 +31,7 @@ struct sortByZ {
 vector<vVertexPoint*> RiverHandler::sampleImage(Image heightMap) {
 	vector<vVertexPoint*> riverPoints;
 
-	for (vVertexPoint* p : graph.getPolyVertices()) {
+	for (vVertexPoint* p : graph->getPolyVertices()) {
 		int screenX = p->getCoords().x * (imageSize - 1);
 		int screenY = p->getCoords().y * (imageSize - 1);
 
@@ -41,18 +52,20 @@ vector<vVertexPoint*>RiverHandler::findSourceCandidates(vector<vVertexPoint*> ri
 	int cutPercent = cutoffPercent;
 	int riverCount = 0;
 
-	std::random_device rd1;
-	std::mt19937 gen1(rd1());
+	//std::random_device rd1;
+	//std::mt19937 gen1(rd1());
 
 	while (riverSources.size() != numberOfRivers) {
 		int	riverLimit = riverPoints.size() * (cutPercent / 100);
-		std::uniform_real_distribution<> dis(0, riverLimit -1);
+		// std::uniform_real_distribution<> dis(0, riverLimit -1);
 		for (int x = 0; x < riverLimit; x++) {
-			int n = dis(gen1);
+			// int n = dis(gen1);
+			int n = rand() % (riverLimit - 1);
 			if(find(riverSources.begin(), riverSources.end(), riverPoints.at(n)) == riverSources.end())
 				riverSources.push_back(riverPoints.at(n));
 		}
 		if (riverSources.size() != numberOfRivers) cutPercent += 10;
+		if (cutPercent > 100) break;
 	}
 
 	return riverSources;
@@ -62,12 +75,13 @@ vector<vector<RiverPoint*>> RiverHandler::makeRivers(int numberOfRivers, vector<
 	vector<vVertexPoint*> starts;
 	vector<vector<RiverPoint*>> rivers;
 
-	std::random_device rd1;
-	std::mt19937 gen1(rd1());
-	std::uniform_real_distribution<> dis(0, riverSources.size()-1);
+	//std::random_device rd1;
+	//std::mt19937 gen1(rd1());
+	//std::uniform_real_distribution<> dis(0, riverSources.size()-1);
 
 	for (int x = 0; x < numberOfRivers; x++) {
-		int n = dis(gen1);
+		//int n = dis(gen1);
+		int n = rand() % (riverSources.size() - 1);
 		if (find(starts.begin(), starts.end(), riverSources.at(n)) == starts.end()) {
 			starts.push_back(riverSources.at(n));
 			rivers.push_back(makeRiverPath(riverSources.at(n)));
@@ -146,18 +160,24 @@ void RiverHandler::drawAll() {
 
 	int radius = 2;
 
-	drawEdges(graph.getPolyEdges(), &pointDisplay, cWhite);
-	drawPoints(graph.getPolyVertices(), &pointDisplay, cGrey,radius);
+	//cout << "Found " << graph->getTriangles().size() << " triangles, with " << graph->getTriEdges().size() << " edges." << endl;
+	//cout << "Found " << graph->getPolygons().size() << " polygons, with " << graph->getPolyEdges().size() << " edges." << endl;
+
+	drawEdges(graph->getPolyEdges(), &pointDisplay, cGrey);
+	drawPoints(graph->getPolyVertices(), &pointDisplay, cWhite,radius);
+	//drawPolygons(graph.getTriangles(), &pointDisplay, cGrey, cWhite, radius);
 	drawRivers(rivers, &pointDisplay, cRed,radius);
 
 	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
-
-	draw_disp.wait();
-
+	while (!draw_disp.is_closed()) {
+		draw_disp.wait();
+	}
 }
 
 void RiverHandler::drawEdges(vector<vEdge*> edges, CImg<unsigned char> *pointDisplay, const unsigned char color[]) {
 	for (vEdge *e : edges) {
+		//cout << e->v0->screenCoords << " -- " << e->v1->screenCoords << endl;
+
 		int p0x = e->v0->screenCoords.x;
 		int p0y = e->v0->screenCoords.y;
 		int p1x = e->v1->screenCoords.x;
@@ -166,6 +186,7 @@ void RiverHandler::drawEdges(vector<vEdge*> edges, CImg<unsigned char> *pointDis
 		int points[4] = { p0x, p0y, p1x, p1y };
 
 		pointDisplay->draw_line(points[0], points[1], points[2], points[3], color);
+
 	}
 }
 void RiverHandler::drawPoints(vector<vVertexPoint*> points, CImg<unsigned char> *pointDisplay, const unsigned char color[], int radius) {
@@ -190,4 +211,24 @@ void RiverHandler::drawRivers(vector<vector<RiverPoint*>> riverSet, CImg<unsigne
 		}
 	}
 
+}
+
+void RiverHandler::drawPolygons(vector<vTriangle*> polys, CImg<unsigned char> *pointDisplay, const unsigned char lineColor[], const unsigned char nodeColor[], int radius) {
+	//cout << "Drawing " << polys.size() << " polygons."<<endl;
+	for (vTriangle *p : polys) {
+		//cout << "Drawing " << p->getEdges().size() << " edges" << endl;
+		for (vEdge *e : p->getEdges()) {
+			//cout << e->v0->screenCoords << " -- " << e->v1->screenCoords << endl;
+
+			int p0x = e->v0->screenCoords.x;
+			int p0y = e->v0->screenCoords.y;
+			int p1x = e->v1->screenCoords.x;
+			int p1y = e->v1->screenCoords.y;
+
+			int points[4] = { p0x, p0y, p1x, p1y };
+
+			pointDisplay->draw_line(points[0], points[1], points[2], points[3], lineColor);
+
+		}
+	}
 }

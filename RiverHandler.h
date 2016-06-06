@@ -24,7 +24,7 @@ private:
 	Image heightMap = Image("./work/res/textures/test_heightmap.png");
 	int imageSize = 1024;
 
-	VoronoiHandler graph;
+	VoronoiHandler *graph;
 	vector<vVertexPoint*> riverPoints;
 	vector<vVertexPoint*> riverSources;
 	vector<vector<RiverPoint*>> rivers;
@@ -40,10 +40,11 @@ private:
 	RiverPoint* getNextRiverPoint(RiverPoint*);
 	vVertexPoint* dealWithLocalMin(RiverPoint*);
 
+	
 	void drawEdges(vector<vEdge*>, CImg<unsigned char>*, const unsigned char[]);
 	void drawPoints(vector<vVertexPoint*>, CImg<unsigned char>*, const unsigned char[],int);
 	void drawRivers(vector<vector<RiverPoint*>>, CImg<unsigned char>*, const unsigned char[], int);
-
+	void drawPolygons(vector<vTriangle*>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 
 public:
 	RiverHandler();

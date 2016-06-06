@@ -14,23 +14,59 @@ VoronoiHandler::VoronoiHandler(int density) {
 	this->triangles = generateTriangles(triVertices);
 	this->triEdges = findEdges(triangles);
 	this->borderTris = findBorders(triangles);
+	cout << "Generated " << triangles.size() << " triangles, with ";
+	cout << triEdges.size() << " edges." << endl;
+
+	int triangleCount = 0;
+	int edgeCount = 0;
+	int cornerCount = 0;
+
+	//Some debug stuff under here
+	/*
+	for (vTriangle* t : triangles) {
+		triangleCount++;
+		edgeCount += t->getEdges().size();
+		cornerCount += t->getCorners().size();
+		cout << "Triangle " << t << " with " << t->getEdges().size() << " edges, and " << t->getCorners().size() << " corners."<<endl;
+		for (vVertexPoint *c : t->getCorners()) {
+			cout << "\tCoords: " << c->getCoords();
+			cout << "\tScreenCoords: " << c->screenCoords << endl;
+		}
+	}
+*/
 
 	this->polyVertices = findCenters(triangles);
 	this->polyCenters = findPolyCenters(triVertices);
 	this->polygons = generateVPolys(polyCenters);
 	this->polyEdges = findEdges(polygons);
 	this->borderPolys = findBorders(polygons);
+	cout << "Generated " << polygons.size() << " polygons, with ";
+	cout << polyEdges.size() << " edges." << endl;
 
 	pinToEdges(polyVertices);
 
-	// adjust centers - not working
-	for (vTriangle *p : polygons) {
-		p->updateCenter();
+	// More Debug stuff
+	/*
+	for (vTriangle* t : polygons) {
+		triangleCount++;
+		edgeCount += t->getEdges().size();
+		cornerCount += t->getCorners().size();
+		cout << "Polygon " << t << " with " << t->getEdges().size() << " edges, and " << t->getCorners().size() << " corners." << endl;
+		for (vVertexPoint *c : t->getCorners()) {
+			cout << "\tCoords: " << c->getCoords();
+			cout << "\tScreenCoords: " << c->screenCoords << endl;
+		}
 	}
+	*/
 
-	for (int x = 0; x < relaxPasses; x++) {
-		this->polyVertices = relaxTriangles(this->polyVertices, this->polygons);
-	}
+	// adjust centers - not working
+	//for (vTriangle *p : polygons) {
+	//	p->updateCenter();
+	//}
+
+	//for (int x = 0; x < relaxPasses; x++) {
+	//	this->polyVertices = relaxTriangles(this->polyVertices, this->polygons);
+	//}
 
 	//removeBorderPolys(borderTris);
 }
@@ -144,6 +180,12 @@ void VoronoiHandler::setScreenCoords(int imageSize) {
 		int y = p->getCoords().y * (imageSize - 1);
 		p->screenCoords = vec2(x, y);
 	}
+
+	for (vVertexPoint * p : polyCenters) {
+		int x = p->getCoords().x * (imageSize - 1);
+		int y = p->getCoords().y * (imageSize - 1);
+		p->screenCoords = vec2(x, y);
+	}
 }
 
 vector<vTriangle*> VoronoiHandler::getTriangles() {
@@ -164,7 +206,7 @@ vector<vVertexPoint*> VoronoiHandler::getPolyVertices(){
 }
 
 vector<vEdge*> VoronoiHandler::getPolyEdges() {
-	return polyEdges;
+	return this->polyEdges;
 }
 
 // Generate (density) random points in a normal distribution
@@ -187,7 +229,7 @@ vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 		
 		float x = dis(gen1);
 		float y = dis(gen2);
-		cout << "x = " << x << " \ty = " << y << endl;
+		//cout << "x = " << x << " \ty = " << y << endl;
 
 		// vVertexPoint point(x, y);
 		vec2 vPoint(x, y);
@@ -314,7 +356,7 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 		// re-triangulate the polygonal hole
 		for (vEdge* e : holeEdges) { 
 			vTriangle *t = new vTriangle(v, e->v0, e->v1); // form a triangle from edge to point
-			//cout << "Adding New Triangle; " << t << endl;
+			//cout << "Adding New Triangle " << t << " with "<<t->getEdges().size()<<" edges."<< endl;
 			newTriangles.push_back(t);
 		}
 
@@ -361,7 +403,7 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 		finalTriangles.push_back(t);
 	}
 
-	cout << "Total good triangles: " << finalTriangles.size() << endl;
+	//cout << "Total good triangles: " << finalTriangles.size() << endl;
 	return finalTriangles;
 }
 

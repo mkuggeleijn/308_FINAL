@@ -881,6 +881,7 @@ int main(int argc, char **argv) {
 
 
 	RiverHandler rHandler;
+	rHandler.drawAll();
 
 	initBoxTexture();
 	initTableTexture();
@@ -896,7 +897,7 @@ int main(int argc, char **argv) {
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(g_window)) {
 
-		rHandler.drawAll();
+		
 
 		// Make sure we draw to the WHOLE window
 		int width, height;
