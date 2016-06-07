@@ -24,8 +24,14 @@ private:
 	vTriangle *polyCenter;
 	vector<vTriangle*> polys;
 	vector<vEdge*> edges;
+	vector<vVertexPoint*> neighbours;
+
 	float zValue;
+	float water;
 	bool border;
+	bool river;
+	vVertexPoint* downstream;
+	
 
 public:
 	// Constructors/Destructor
@@ -40,16 +46,34 @@ public:
 	vec2 getCoords();
 	void setCoords(vec2);
 	void setCoords(float, float);
+
 	float getZValue();
 	void setZValue(float);
+
+	vector<vVertexPoint*> getNeighbours();
+	void addNeighbour(vVertexPoint*);
+	void removeNeighbour(vVertexPoint*);
+
 	vector<vEdge*> getEdges();
 	void addEdge(vEdge*);
 	void removeEdge(vEdge*);
+
 	vector<vTriangle*> getPolys();
 	void addPoly(vTriangle*);
 	void removePoly(vTriangle*);
+
+	void setRiver(bool);
+	bool isRiver();
+
+	void setDownstream(vVertexPoint*);
+	vVertexPoint* getDownstream();
+
 	void setBorder(bool);
 	bool isBorder();
+
+	void setWater(float);
+	float getWater();
+	void updateFlow(float);
 
 	void setPolyCenter(vTriangle*);
 	void removePolyCenter(vTriangle*);

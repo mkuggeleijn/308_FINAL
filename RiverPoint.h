@@ -11,7 +11,7 @@ class RiverPoint;
 class RiverPoint {
 private:
 	bool source;
-	bool exit;
+	bool riverExit;
 	float intensity;
 	int water;
 	float width;

@@ -17,10 +17,6 @@ VoronoiHandler::VoronoiHandler(int density) {
 	cout << "Generated " << triangles.size() << " triangles, with ";
 	cout << triEdges.size() << " edges." << endl;
 
-	int triangleCount = 0;
-	int edgeCount = 0;
-	int cornerCount = 0;
-
 	//Some debug stuff under here
 	/*
 	for (vTriangle* t : triangles) {
@@ -43,7 +39,11 @@ VoronoiHandler::VoronoiHandler(int density) {
 	cout << "Generated " << polygons.size() << " polygons, with ";
 	cout << polyEdges.size() << " edges." << endl;
 
-	pinToEdges(polyVertices);
+	//pinToEdges(polyVertices);
+
+	for (vTriangle *p : polygons) {
+		p->updateCenter();
+	}
 
 	// More Debug stuff
 	/*
@@ -152,39 +152,33 @@ bool VoronoiHandler::sortByX(const vec2 p1, const vec2 p2) {
 	return p1.x < p2.x;
 }
 
-template <typename T>
-struct pointer_values_equal
-{
-	const T* to_find;
-
-	bool operator()(const T* other) const
-	{
-		return *to_find == *other;
-	}
-};
 
 // ############################################################
 // Public
 // ############################################################
 
-
-void VoronoiHandler::setScreenCoords(int imageSize) {
+// Sample intensity of heightmap and add data to polygon graph
+void VoronoiHandler::sampleImage(int imageSize, Image heightMap) {
 	for (vVertexPoint * p : triVertices) {
 		int x = p->getCoords().x * (imageSize - 1);
 		int y = p->getCoords().y * (imageSize - 1);
+
 		p->screenCoords = vec2(x, y);
+		p->setZValue(heightMap.getIntensity(x, y));
 	}
 
 	for (vVertexPoint * p : polyVertices) {
 		int x = p->getCoords().x * (imageSize - 1);
 		int y = p->getCoords().y * (imageSize - 1);
 		p->screenCoords = vec2(x, y);
+		p->setZValue(heightMap.getIntensity(x, y));
 	}
 
 	for (vVertexPoint * p : polyCenters) {
 		int x = p->getCoords().x * (imageSize - 1);
 		int y = p->getCoords().y * (imageSize - 1);
 		p->screenCoords = vec2(x, y);
+		p->setZValue(heightMap.getIntensity(x, y));
 	}
 }
 
@@ -213,7 +207,8 @@ vector<vEdge*> VoronoiHandler::getPolyEdges() {
 vector<vVertexPoint*> VoronoiHandler::generatePointSet(int density) {
 	float max = 1.0;
 	float min = 0.0;
-	vector<vec2> pointSet = makeCornerPoints(max, min);
+	// vector<vec2> pointSet = makeCornerPoints(max, min);
+	vector<vec2> pointSet;
 	vector<vVertexPoint*> vertexSet;
 	
 	// pointSet.clear();

@@ -13,6 +13,7 @@
 #include "vVertexPoint.h"
 #include "vEdge.h"
 #include "vTriangle.h"
+#include "simple_image.hpp"
 
 
 
@@ -30,7 +31,7 @@ class VoronoiHandler {
 private:
 
 	int density;
-	int relaxPasses = 0;
+	int relaxPasses = 1;
 	// vector<vec2> pointSet;
 
 	// Triangle mesh vertices are polygon centers
@@ -82,7 +83,7 @@ public:
 	vector<vVertexPoint*> getPolyVertices();
 	vector<vEdge*> getPolyEdges();
 
-	void setScreenCoords(int);
+	void sampleImage(int,Image);
 
 	void changeDensity(int);
 	

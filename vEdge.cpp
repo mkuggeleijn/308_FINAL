@@ -7,6 +7,8 @@ vEdge::vEdge(vVertexPoint *v0, vVertexPoint *v1, vTriangle *poly) {
 	this->v1 = v1;
 	v0->addEdge(this);
 	v1->addEdge(this);
+	v0->addNeighbour(v1);
+	v1->addNeighbour(v0);
 	polys.clear();
 	polys.push_back(poly);
 

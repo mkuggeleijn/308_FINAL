@@ -6,8 +6,11 @@ vVertexPoint::vVertexPoint() {
 	coords = vec2(0, 0);
 	zValue = 0.0f; 
 	edges.clear();
-	//neighbours.clear();
+	neighbours.clear();
 	border = false;
+	river = false;
+	water = 0.0f;
+	zValue = 0.0f;
 	polyCenter = 0;
 }
 
@@ -15,8 +18,11 @@ vVertexPoint::vVertexPoint(vec2 coords) {
 	this->coords = coords;
 	zValue = 0.0f;
 	edges.clear();
-	//neighbours.clear();
+	neighbours.clear();
 	border = false;
+	river = false;
+	water = 0.0f;
+	zValue = 0.0f;
 	polyCenter = 0;
 }
 
@@ -24,8 +30,11 @@ vVertexPoint::vVertexPoint(float x, float y) {
 	this->coords = vec2(x, y);
 	this->zValue = 0.0f;
 	edges.clear();
-	//neighbours.clear();
+	neighbours.clear();
 	border = false;
+	river = false;
+	water = 0.0f;
+	zValue = 0.0f;
 	polyCenter = 0;
 }
 
@@ -33,8 +42,11 @@ vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
 	this->coords = coords;
 	this->zValue = zValue;
 	edges.clear();
-	//neighbours.clear();
+	neighbours.clear();
 	border = false;
+	river = false;
+	water = 0.0f;
+	zValue = 0.0f;
 	polyCenter = 0;
 }
 
@@ -42,12 +54,19 @@ vVertexPoint::vVertexPoint(float x, float y, float zValue) {
 	this->coords = vec2(x, y);
 	this->zValue = zValue;
 	edges.clear();
-	//neighbours.clear();
+	neighbours.clear();
 	border = false;
+	river = false;
+	water = 0.0f;
+	zValue = 0.0f;
 	polyCenter = 0;
 }
 
 vVertexPoint::~vVertexPoint() {
+
+	for (vVertexPoint* n : neighbours) {
+		n->removeNeighbour(this);
+	}
 
 	for (vTriangle *p : polys) {
 		p->removeCorner(this);
@@ -59,13 +78,34 @@ vVertexPoint::~vVertexPoint() {
 
 } 
 
+vector<vVertexPoint*> vVertexPoint::getNeighbours() {
+	return this->neighbours;
+}
 
+void vVertexPoint::addNeighbour(vVertexPoint* neighbour) {
+	vector<vVertexPoint*>::iterator itr;
+	itr = find(neighbours.begin(), neighbours.end(), neighbour);
+	if (itr == neighbours.end())  this->neighbours.push_back(neighbour);
+}
+
+void vVertexPoint::removeNeighbour(vVertexPoint* neighbour) {
+	vector<vVertexPoint*>::iterator itr;
+	itr = find(neighbours.begin(), neighbours.end(), neighbour);
+	if (itr != neighbours.end()) neighbours.erase(itr);
+	// if (polys.size() == 0) delete this;
+}
 
 void vVertexPoint::removeEdge(vEdge* e) {
 	vector<vEdge*>::iterator itr;
 	itr = find(edges.begin(), edges.end(), e);
 	if (itr != edges.end()) edges.erase(itr);
 	// if (edges.size() == 0) delete this; // a vertex can be created without an edge, but can't be left without one.
+}
+
+void vVertexPoint::updateFlow(float flow) {
+	this -> water += flow;
+	if (!border && downstream != nullptr)
+		downstream->updateFlow(flow);
 }
 
 // Set/Get
@@ -129,4 +169,27 @@ void vVertexPoint::setBorder(bool border) {
 
 bool vVertexPoint::isBorder() {
 	return this->border;
+}
+
+void vVertexPoint::setRiver(bool river) {
+	this->river = river;
+}
+
+bool vVertexPoint::isRiver() {
+	return this->river;
+}
+
+void vVertexPoint::setDownstream(vVertexPoint* downstream) {
+	this->downstream = downstream;
+}
+
+vVertexPoint* vVertexPoint::getDownstream() {
+	return this->downstream;
+}
+
+void vVertexPoint::setWater(float water) {
+	this->water = water;
+}
+float vVertexPoint::getWater() {
+	return this->water;
 }

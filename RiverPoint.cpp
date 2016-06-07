@@ -2,18 +2,20 @@
 
 RiverPoint::RiverPoint(vVertexPoint *location) {
 	this->location = location;
-	water = 1;
+	this->water = 1;
+	this->riverExit = location->isBorder();
 }
 
 RiverPoint::RiverPoint(vVertexPoint *location, float intensity) {
 	this->location = location;
 	this->intensity = intensity;
+	this->riverExit = location->isBorder();
 }
 
 void RiverPoint::updateFlow(int flow) {
 	water += flow;
 	// recalculate width too
-	if (!exit) {
+	if (!riverExit) {
 		downstream->updateFlow(flow);
 	}
 
@@ -21,29 +23,29 @@ void RiverPoint::updateFlow(int flow) {
 
 
 bool RiverPoint::isSource() {
-	return source;
+	return this ->source;
 }
 bool RiverPoint::isExit() {
-	return exit;
+	return this -> riverExit;
 }
 float RiverPoint::getWater() {
-	return water;
+	return this -> water;
 }
 float RiverPoint::getWidth() {
-	return width;
+	return this -> width;
 }
 vVertexPoint* RiverPoint::getLocation() {
-	return location;
+	return this->location;
 }
 RiverPoint* RiverPoint::getDownstream() {
-	return downstream;
+	return this -> downstream;
 }
 
 void RiverPoint::setSource(bool source) {
 	this->source = source;
 }
 void RiverPoint::setExit(bool exit) {
-	this->exit = exit;
+	this->riverExit = exit;
 }
 void RiverPoint::setWater(int water) {
 	this->water = water;
