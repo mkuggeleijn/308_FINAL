@@ -18,11 +18,11 @@ using namespace cimg_library;
 
 class RiverHandler {
 private:
-	int numberOfRivers = 1;
-	int cutoffPercent = 15;
-	int density = 100;
+	int numberOfRivers = 10;
+	int cutoffPercent = 5;
+	int density = 400;
 	//Image heightMap = Image("./work/res/textures/test_heightmap.png");
-	Image heightMap = Image("./work/res/textures/simplebump.png");
+	Image *heightMap;
 	CImg<unsigned char> drawheightMap = CImg<unsigned char>("./work/res/textures/simplebump.pgm");
 	int imageSize = drawheightMap.width();
 	//int imageSize = 1024;

@@ -2,14 +2,15 @@
 
 
 RiverHandler::RiverHandler() {
-	
+	heightMap = new Image("./work/res/textures/simplebump.png");
+
 	this -> graph = new VoronoiHandler(density);
 	graph -> sampleImage(imageSize, heightMap);
 	this -> riverSources = findSourceCandidates(graph->getPolyVertices());
 	cout << "Found " << riverSources.size() << " river source candidates." << endl;
 	cout << "Making " << numberOfRivers << " rivers..." << endl;
 	this->rivers = makeRivers(numberOfRivers, riverSources);
-	//cout << "Found " << rivers.size() << " rivers." << endl;
+	cout << "Found " << rivers.size() << " rivers." << endl;
 	//Some debug stuff under here
 	/*
 	for (vTriangle* t : graph->getTriangles()) {
@@ -23,18 +24,23 @@ RiverHandler::RiverHandler() {
 	
 }
 
-struct sortByZ {
+struct sortByGreaterZ {
 	bool operator()(vVertexPoint *p1, vVertexPoint *p2) const {
 		return p1->getZValue() > p2->getZValue();
 	}
 };
 
+struct sortByLesserZ {
+	bool operator()(vVertexPoint *p1, vVertexPoint *p2) const {
+		return p1->getZValue() < p2->getZValue();
+	}
+};
 
 
 // Get certain amount of highest points
 vector<vVertexPoint*>RiverHandler::findSourceCandidates(vector<vVertexPoint*> riverPoints) {
 
-	sort(riverPoints.begin(), riverPoints.end(), sortByZ());
+	sort(riverPoints.begin(), riverPoints.end(), sortByGreaterZ());
 
 	vector<vVertexPoint*>riverSources;
 
@@ -58,20 +64,23 @@ vector<vector<vVertexPoint*>> RiverHandler::makeRivers(int numberOfRivers, vecto
 
 	if (riverSources.size() < numberOfRivers) numberOfRivers = riverSources.size();
 
-	//std::random_device rd1;
-	//std::mt19937 gen1(rd1());
-	//std::uniform_real_distribution<> dis(0, riverSources.size-1);
+	const int range = riverSources.size() - 1;
+	std::random_device rd1;
+	std::mt19937 gen1(rd1());
+	std::uniform_real_distribution<> dis(0, range);
 
 	for (int x = 0; x < numberOfRivers; x++) {
-		//int n = dis(gen1);
-		int n = rand() % (riverSources.size() - 1);
+		int n = dis(gen1);
+		// int n = rand() % (riverSources.size() - 1);
 		vVertexPoint *source = riverSources.at(n);
+		/*
 		while (source->isRiver()) {
-			cout << "In the river loop" << endl;
+			cout << "In the river loop, n = " << n << endl;
 			//n = dis(gen1);
-			int n = rand() % (riverSources.size() - 1);
+			n = rand() % (riverSources.size() - 1);
 			vVertexPoint *source = riverSources.at(n);
 		}
+		*/
 		vector<vVertexPoint*> newRiver = makeRiverPath(source);
 		rivers.push_back(newRiver);
 	}
@@ -82,6 +91,7 @@ vector<vector<vVertexPoint*>> RiverHandler::makeRivers(int numberOfRivers, vecto
 // Generate a single river
 vector<vVertexPoint*> RiverHandler::makeRiverPath(vVertexPoint* source) {
 
+	source->setRiver(true);
 	vector<vVertexPoint*> river;
 	river.push_back(source);
 	source->setDownstream(getNextRiverPoint(source, &river));
@@ -91,32 +101,49 @@ vector<vVertexPoint*> RiverHandler::makeRiverPath(vVertexPoint* source) {
 // Find the next point of the river
 vVertexPoint* RiverHandler::getNextRiverPoint(vVertexPoint *parent, vector<vVertexPoint*> *river) {
 
+	cout << "Node " << parent << ": Neighbours: " << parent->getNeighbours().size() << "\tEdges: " << parent->getEdges().size();
+	cout << "\tIntensity: " << parent->getZValue() << endl;
+
 	vector<vVertexPoint*> neighbours = parent->getNeighbours();
-	sort(neighbours.begin(), neighbours.end(), sortByZ());
-	vVertexPoint *next = neighbours.at(0);
-	if (neighbours.size() > 1) {
-		for (int x = 1; x < neighbours.size(); x++) {
-			if (find(river->begin(), river->end(), next) == river->end()) {
-				next = neighbours.at(x);
-				break;
-			}
-		}
-	}
-	// if (next->getZValue() > parent->getZValue()) local minimum, tricky
+	sort(neighbours.begin(), neighbours.end(), sortByLesserZ());
 	
+	vVertexPoint *next;
+	int x = 0;
+	while (x < neighbours.size()) {
+		next = neighbours.at(x);
+		if (find(river->begin(), river->end(), next) == river->end()) break;
+		x++;
+	}
+
+	// If there are no valid candidates
+	if (x == neighbours.size()) {
+		cout << "No valid river points found" << endl;
+		parent->setBorder(true);
+		return 0;
+	}
+
+	// if (next->getZValue() > parent->getZValue()) local minimum, tricky
+
+	next->setRiver(true);
 	float water = distance(next->getCoords(), parent->getCoords());
+	next->updateFlow(water);
 	river->push_back(next);
 
-	// If we're merging two rivers
-	if (next->isRiver() && (find(river->begin(), river->end(), next) == river->end())) {
-		next->updateFlow(water);
+	cout << "Riverpoint " << next << " at " << next->screenCoords << ": Intensity " << next->getZValue();
+	cout << ", isBorder " << next->isBorder() << endl;
+
+	// If we've hit the mesh edge
+	if (next->isBorder()) {
+		cout << "Mesh edge reached" << endl;
 		return next;
 	}
 
-	next->setRiver(true);
-	next->setWater(water);
-
-	if (next->isBorder()) return next;
+	
+	// If we're merging two rivers
+	if (next->isRiver() && (find(river->begin(), river->end(), next) == river->end())) {
+		cout << "Merging two rivers" << endl;
+		return next;
+	}
 
 	next->setDownstream(getNextRiverPoint(next, river));
 	return next;
@@ -139,15 +166,16 @@ void RiverHandler::drawAll() {
 	const unsigned char cYellow[] = { 255,255,0 };
 
 	CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
-	pointDisplay.assign("./work/res/textures/simplebump.pgm");
+	// pointDisplay.assign("./work/res/textures/simplebump.pgm");
 	int radius = 2;
 
 	cout << "Found " << graph->getTriangles().size() << " triangles, with " << graph->getTriEdges().size() << " edges." << endl;
 	//cout << "Found " << graph->getPolygons().size() << " polygons, with " << graph->getPolyEdges().size() << " edges." << endl;
 
-	drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
-	drawEdges(graph->getPolyEdges(), &pointDisplay, cDarkGrey);
-	drawPoints(graph->getPolyVertices(), &pointDisplay, cBlack ,cGrey, radius);
+	//drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
+	drawEdges(graph->getPolyEdges(), &pointDisplay, cYellow);
+	drawPoints(graph->getPolyVertices(), &pointDisplay, cRed ,cBlue, radius);
+	//drawPoints(graph->getTriVertices(), &pointDisplay, cWhite, cYellow, radius);
 	//drawPolygons(graph.getTriangles(), &pointDisplay, cGrey, cWhite, radius);
 	drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
 
@@ -182,7 +210,7 @@ void RiverHandler::drawPoints(vector<vVertexPoint*> points, CImg<unsigned char> 
 void RiverHandler::drawRivers(vector<vector<vVertexPoint*>> riverSet, CImg<unsigned char> *pointDisplay, const unsigned char lineColor[], const unsigned char nodeColor[], int radius) {
 	for (vector<vVertexPoint*> river : riverSet) {
 		for (vVertexPoint* r : river) {
-			cout << "Riverpoint " << r << " at " << r->screenCoords << endl;
+			//cout << "Riverpoint " << r << " at " << r->screenCoords << endl;
 			int p0x = r->screenCoords.x;
 			int p0y = r->screenCoords.y;
 			pointDisplay->draw_circle(p0x, p0y, radius, nodeColor);
@@ -190,7 +218,7 @@ void RiverHandler::drawRivers(vector<vector<vVertexPoint*>> riverSet, CImg<unsig
 				int p1x = r->getDownstream()->screenCoords.x;
 				int p1y = r->getDownstream()->screenCoords.y;
 				int points[4] = { p0x, p0y, p1x, p1y };
-				cout << "Riverline: " << points << endl;
+				//cout << "Riverline: " << points << endl;
 				pointDisplay->draw_line(points[0], points[1], points[2], points[3], lineColor);
 			}
 		}

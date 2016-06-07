@@ -16,9 +16,6 @@
 #include "simple_image.hpp"
 
 
-
-// #define EPSILON 1.0e-7
-
 using namespace std;
 using namespace cgra;
 
@@ -83,7 +80,7 @@ public:
 	vector<vVertexPoint*> getPolyVertices();
 	vector<vEdge*> getPolyEdges();
 
-	void sampleImage(int,Image);
+	void sampleImage(int,Image*);
 
 	void changeDensity(int);
 	

@@ -157,30 +157,6 @@ bool VoronoiHandler::sortByX(const vec2 p1, const vec2 p2) {
 // Public
 // ############################################################
 
-// Sample intensity of heightmap and add data to polygon graph
-void VoronoiHandler::sampleImage(int imageSize, Image heightMap) {
-	for (vVertexPoint * p : triVertices) {
-		int x = p->getCoords().x * (imageSize - 1);
-		int y = p->getCoords().y * (imageSize - 1);
-
-		p->screenCoords = vec2(x, y);
-		p->setZValue(heightMap.getIntensity(x, y));
-	}
-
-	for (vVertexPoint * p : polyVertices) {
-		int x = p->getCoords().x * (imageSize - 1);
-		int y = p->getCoords().y * (imageSize - 1);
-		p->screenCoords = vec2(x, y);
-		p->setZValue(heightMap.getIntensity(x, y));
-	}
-
-	for (vVertexPoint * p : polyCenters) {
-		int x = p->getCoords().x * (imageSize - 1);
-		int y = p->getCoords().y * (imageSize - 1);
-		p->screenCoords = vec2(x, y);
-		p->setZValue(heightMap.getIntensity(x, y));
-	}
-}
 
 vector<vTriangle*> VoronoiHandler::getTriangles() {
 	return this->triangles;
@@ -572,6 +548,32 @@ vector<vVertexPoint*> VoronoiHandler::pinToEdges(vector<vVertexPoint*> points) {
 	}
 
 	return points;
+}
+
+// Sample intensity of heightmap and add data to polygon graph
+void VoronoiHandler::sampleImage(int imageSize, Image *heightMap) {
+	for (vVertexPoint * p : triVertices) {
+		int x = p->getCoords().x * (imageSize - 1);
+		int y = p->getCoords().y * (imageSize - 1);
+
+		p->screenCoords = vec2(x, y);
+		p->setZValue(heightMap->getIntensity(x, y));
+	}
+
+	for (vVertexPoint * p : polyVertices) {
+		int x = p->getCoords().x * (imageSize - 1);
+		int y = p->getCoords().y * (imageSize - 1);
+		p->screenCoords = vec2(x, y);
+		p->setZValue(heightMap->getIntensity(x, y));
+		cout << "PolyVertex at " << p->screenCoords << ", Intensity " << p->getZValue() << endl;
+	}
+
+	for (vVertexPoint * p : polyCenters) {
+		int x = p->getCoords().x * (imageSize - 1);
+		int y = p->getCoords().y * (imageSize - 1);
+		p->screenCoords = vec2(x, y);
+		p->setZValue(heightMap->getIntensity(x, y));
+	}
 }
 
 void VoronoiHandler::rebuildPolyEdges() {

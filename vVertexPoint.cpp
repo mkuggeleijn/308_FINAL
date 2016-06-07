@@ -12,6 +12,7 @@ vVertexPoint::vVertexPoint() {
 	water = 0.0f;
 	zValue = 0.0f;
 	polyCenter = 0;
+	downstream = nullptr;
 }
 
 vVertexPoint::vVertexPoint(vec2 coords) {
@@ -24,6 +25,7 @@ vVertexPoint::vVertexPoint(vec2 coords) {
 	water = 0.0f;
 	zValue = 0.0f;
 	polyCenter = 0;
+	downstream = nullptr;
 }
 
 vVertexPoint::vVertexPoint(float x, float y) {
@@ -31,11 +33,14 @@ vVertexPoint::vVertexPoint(float x, float y) {
 	this->zValue = 0.0f;
 	edges.clear();
 	neighbours.clear();
+	/*
 	border = false;
 	river = false;
 	water = 0.0f;
 	zValue = 0.0f;
 	polyCenter = 0;
+	downstream = nullptr;
+	*/
 }
 
 vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
@@ -43,11 +48,12 @@ vVertexPoint::vVertexPoint(vec2 coords, float zValue) {
 	this->zValue = zValue;
 	edges.clear();
 	neighbours.clear();
-	border = false;
+	/*border = false;
 	river = false;
 	water = 0.0f;
 	zValue = 0.0f;
 	polyCenter = 0;
+	downstream = nullptr;*/
 }
 
 vVertexPoint::vVertexPoint(float x, float y, float zValue) {
@@ -55,11 +61,12 @@ vVertexPoint::vVertexPoint(float x, float y, float zValue) {
 	this->zValue = zValue;
 	edges.clear();
 	neighbours.clear();
-	border = false;
-	river = false;
-	water = 0.0f;
-	zValue = 0.0f;
-	polyCenter = 0;
+	//border = false;
+	//river = false;
+	//water = 0.0f;
+	//zValue = 0.0f;
+	//polyCenter = 0;
+	//downstream = nullptr;
 }
 
 vVertexPoint::~vVertexPoint() {
@@ -103,9 +110,11 @@ void vVertexPoint::removeEdge(vEdge* e) {
 }
 
 void vVertexPoint::updateFlow(float flow) {
-	this -> water += flow;
-	if (!border && downstream != nullptr)
+	water += flow;
+	if (!border && downstream != nullptr) {
+		//cout << "downstream = " << downstream;
 		downstream->updateFlow(flow);
+	}
 }
 
 // Set/Get

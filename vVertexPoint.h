@@ -26,11 +26,11 @@ private:
 	vector<vEdge*> edges;
 	vector<vVertexPoint*> neighbours;
 
-	float zValue;
-	float water;
-	bool border;
-	bool river;
-	vVertexPoint* downstream;
+	float zValue = 0;
+	float water = 0;
+	bool border = false;
+	bool river = false;
+	vVertexPoint* downstream = nullptr;
 	
 
 public:
