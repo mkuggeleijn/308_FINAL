@@ -41,7 +41,73 @@ int relaxPasses = 0;
 
 // SimpleGrid pointGrid(20);
 
+GLuint g_rivermap = 0;
+RiverHandler rHandler;
+
+// not using this at the moment
+void makeRiverTexture() {
+	int w = 1024, h = 1024;
+
+	GLuint fbo = 0;
+
+	glGenFramebuffers(1, &fbo);
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+	glActiveTexture(GL_TEXTURE1);
+
+	glGenTextures(1, &g_rivermap);
+	glBindTexture(GL_TEXTURE_2D, g_rivermap);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, w, h, 0, GL_RGBA, GL_FLOAT, nullptr);  // had to change this from GL_RED8
+	glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_rivermap, 0);
+
+
+	GLenum bufs[]{ GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, bufs);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+	glViewport(0, 0, w, h);
+
+
+	// Clear to 0
+	glClearColor(0.5f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_NORMALIZE);
+	glDisable(GL_LIGHTING);
+
+	glUseProgram(0);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(-1.0, -1.0, 0.0);
+	glScalef(2.0, 2.0, 1.0);
+
+	glColor3f(1.0, 1.0, 1.0);
+	glLineWidth(2);
+	glBegin(GL_LINES);
+	glVertex2f(0.1, 0.1);
+	glVertex2f(0.9, 0.9);
+	glEnd();
+
+	//rHandler.drawRiversGL();
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glDeleteFramebuffers(1, &fbo);
+
+
+}
+
+
 Image tex2("./work/res/textures/simplebump.png");
+Image tex3("./work/res/textures/rivertest.png");
 // Spotlight
 
 float spotX = 0.0f;
@@ -221,7 +287,8 @@ float g_zoom = 1.0;
 //
 bool g_useShader = false;
 GLuint g_boxtexture = 0;
-GLuint g_tabletexture = 1;
+GLuint g_tabletexture = 0;
+GLuint g_rivertexture = 1;
 GLuint g_reftex = 2;
 
 GLuint g_shader = 0;
@@ -443,32 +510,13 @@ void initAmbiLight() {
 
 
 // An example of how to load a texure from a hardcoded location
-//
-void initBoxTexture() {
-	Image tex("./work/res/textures/brick.jpg");
-
-	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
-	glGenTextures(1, &g_boxtexture); // Generate texture ID
-	// glGenTextures(1, 0); // Generate texture ID
-	glBindTexture(GL_TEXTURE_2D, 1); // Bind it as a 2D texture
-
-	// Setup sampling strategies
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	// Finnaly, actually fill the data into our texture
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex.w, tex.h, tex.glFormat(), GL_UNSIGNED_BYTE, tex.dataPointer());
-}
 
 void initTableTexture() {
 	// Image tex2("./work/res/textures/test_heightmap.png");
 
 	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
 	glGenTextures(1, &g_tabletexture); // Generate texture ID
-	glBindTexture(GL_TEXTURE_2D, 2); // Bind it as a 2D texture
+	glBindTexture(GL_TEXTURE_2D, 0); // Bind it as a 2D texture
 
 											 // Setup sampling strategies
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -481,55 +529,24 @@ void initTableTexture() {
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex2.w, tex2.h, tex2.glFormat(), GL_UNSIGNED_BYTE, tex2.dataPointer());
 }
 
-void initReflectionMap() {
-	Image left("./work/res/textures/left.jpg");
-	Image front("./work/res/textures/front.jpg");
-	Image top("./work/res/textures/top.jpg");
-	Image bottom("./work/res/textures/bottom.jpg");
-	Image right("./work/res/textures/right.jpg");
-	Image back("./work/res/textures/back.jpg");
+void initRiverBumpTexture() {
+	// Image tex2("./work/res/textures/test_heightmap.png");
 
-	glActiveTexture(GL_TEXTURE0);
-	glGenTextures(1, &g_reftex);
+	glActiveTexture(GL_TEXTURE1); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
+	glGenTextures(1, &g_rivertexture); // Generate texture ID
+	glBindTexture(GL_TEXTURE_2D, 1); // Bind it as a 2D texture
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP, g_reftex);
+									 // Setup sampling strategies
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, left.w, left.h, 0, left.glFormat(), GL_UNSIGNED_BYTE, left.dataPointer());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, right.w, right.h, 0, right.glFormat(), GL_UNSIGNED_BYTE, right.dataPointer());
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, top.w, top.h, 0, top.glFormat(), GL_UNSIGNED_BYTE, top.dataPointer());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, bottom.w, bottom.h, 0, bottom.glFormat(), GL_UNSIGNED_BYTE, bottom.dataPointer());
-
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, front.w, front.h, 0, front.glFormat(), GL_UNSIGNED_BYTE, front.dataPointer());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, back.w, back.h, 0, back.glFormat(), GL_UNSIGNED_BYTE, back.dataPointer());
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-	/*
-	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_EXT);
-	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_EXT);
-	glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_EXT);
-	*/
-	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_EXT);
-	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_EXT);
-	glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_EXT);
-
-	glEnable(GL_TEXTURE_CUBE_MAP_EXT);
-	glEnable(GL_TEXTURE_GEN_S);
-	glEnable(GL_TEXTURE_GEN_T);
-	glEnable(GL_TEXTURE_GEN_R);
-
-
-	// glBindTexture(GL_TEXTURE_CUBE_MAP, 3);
-
-	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-
+	// Finnaly, actually fill the data into our texture
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex3.w, tex3.h, tex3.glFormat(), GL_UNSIGNED_BYTE, tex3.dataPointer());
 }
+
 
 // An example of how to load a shader from a hardcoded location
 //
@@ -583,7 +600,7 @@ void setupCamera(int width, int height) {
 	glRotatef(g_pitch, 1, 0, 0);
 	glRotatef(g_yaw, 0, 1, 0);
 }
-
+/*
 void setupBoxTex() {
 
 	glEnable(GL_TEXTURE_2D);
@@ -599,7 +616,8 @@ void setupBoxTex() {
 	// Bind the texture
 	glBindTexture(GL_TEXTURE_2D, 1);
 }
-
+*/
+/*
 void setupTableTex() {
 
 	glEnable(GL_TEXTURE_2D);
@@ -614,10 +632,13 @@ void setupTableTex() {
 	//glScalef(-5.0f, -5.0f, 1.0f);
 
 	// Bind the texture
-	glBindTexture(GL_TEXTURE_2D, 2);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
 
 }
+*/
 
+/*
 void setupRefTex() {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_CUBE_MAP);
@@ -631,30 +652,30 @@ void setupRefTex() {
 
 	//glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	//glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	/*
-
-	*/
-
-
-
+	
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 3);
 
 }
+*/
 
-
+/*
 void setupEnvShader() {
 
 	glUniform1i(glGetUniformLocation(g_shader, "texture0"), 0);
 	//glUniform3fv(glGetUniformLocation(g_shader, "cameraPos"), 1, cam.dataPointer());
 }
+*/
 
 // Draw function
 //
 void render(int width, int height) {
 
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glViewport(0, 0, width, height);
+
 	// Grey/Blueish background
-	// glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
-	glClearColor(0.0f, 0.0f, 0.001f, 1.0f);
+	glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
+	//glClearColor(0.0f, 0.0f, 0.001f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
@@ -672,49 +693,33 @@ void render(int width, int height) {
 	// Uses the shaders that you bind for the graphics pipeline
 	//
 
+	glUseProgram(g_shader);
+	glUniform1i(glGetUniformLocation(g_shader, "texture0"), 0);
+	glUniform1i(glGetUniformLocation(g_shader, "texture1"), 1);
+	glUniform1f(glGetUniformLocation(g_shader, "amplitude"), 2.0);
+	glUniform1f(glGetUniformLocation(g_shader, "riverScalar"), 2.0);
 
-	// Texture setup
-	//
-	// Set the location for binding the texture
+
 	glActiveTexture(GL_TEXTURE0);
-	// Bind the texture
 	glBindTexture(GL_TEXTURE_2D, g_tabletexture);
+	
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, g_rivertexture);
+	
+	//glActiveTexture(GL_TEXTURE0);
 
 	// Use the shader we made
-	glUseProgram(g_shader);
 
 	// Set our sampler (texture0) to use GL_TEXTURE0 as the source
-	glUniform1i(glGetUniformLocation(g_shader, "texture0"), 0);
+
+	
 
 
-	glUniform1f(glGetUniformLocation(g_shader, "amplitude"), 2.0);
 		
+	
+
 	// Render a single square as our geometry
 	// You would normally render your geometry here
-	/*
-	glBegin(GL_QUADS);
-	glNormal3f(0.0, 0.0, 1.0);
-	glTexCoord2f(0.0, 0.0);
-	glVertex3f(-5.0, -5.0, 0.0);
-	glTexCoord2f(0.0, 1.0);
-	glVertex3f(-5.0, 5.0, 0.0);
-	glTexCoord2f(1.0, 1.0);
-	glVertex3f(5.0, 5.0, 0.0);
-	glTexCoord2f(1.0, 0.0);
-	glVertex3f(5.0, -5.0, 0.0);
-	glEnd();
-	glFlush();
-	*/
-	/*
-	glShadeModel(GL_SMOOTH);
-	GLfloat colour[] = { 0.5, 0.0, 0.0, 1.0 };
-
-	glMaterialfv(GL_FRONT, GL_AMBIENT, colour);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, colour);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, colour);
-	glMaterialfv(GL_FRONT, GL_SHININESS, colour);
-	glMaterialfv(GL_FRONT, GL_EMISSION, colour);
-	*/
 	// initSpotLight();
 
 	for (geomEntry g : geometries) {
@@ -880,12 +885,13 @@ int main(int argc, char **argv) {
 
 
 
-	RiverHandler rHandler;
-	rHandler.drawAll();
+	
+	//rHandler.drawAll();
 
-	initBoxTexture();
+	//makeRiverTexture();
 	initTableTexture();
-	initReflectionMap();
+	initRiverBumpTexture();
+
 	initShader();
 	initGeometry();
 

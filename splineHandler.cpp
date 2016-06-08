@@ -155,7 +155,7 @@ vector<vec4> splineHandler::makeRiverSpline(vector<vVertexPoint*> riverPoints) {
 	}
 	else {
 		float v1x = riverPoints.back()->getCoords().x + (riverPoints.back()->getCoords().x - riverPoints.at(riverPoints.size()-2)->getCoords().x);
-		float v1y = riverPoints.at(0)->getCoords().y - (riverPoints.back()->getCoords().y - riverPoints.at(riverPoints.size() - 2)->getCoords().y);
+		float v1y = riverPoints.back()->getCoords().y - (riverPoints.back()->getCoords().y - riverPoints.at(riverPoints.size() - 2)->getCoords().y);
 		v1 = vec4(v1x, v1y, riverPoints.back()->getWater(), 1);
 	}
 

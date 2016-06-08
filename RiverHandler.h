@@ -11,6 +11,7 @@
 #include "simple_image.hpp"
 #include "CImg.h"
 #include "splineHandler.hpp"
+//#include "riverData.hpp"
 
 using namespace std;
 using namespace cgra;
@@ -51,14 +52,16 @@ private:
 	void drawPoints(vector<vVertexPoint*>, CImg<unsigned char>*, const unsigned char[], const unsigned char[],int);
 	void drawRivers(vector<vector<vVertexPoint*>>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 	void drawRiverSplines(vector<vector<vVertexPoint*>>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
-	void drawRiverSplineGL(vector<vector<vVertexPoint*>>);
-	void drawRiversGL();
+	
+	
 	void drawPolygons(vector<vTriangle*>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 
 public:
 	RiverHandler();
-
+	void drawRiversGL();
 	void drawAll();
+
+	//vector <vector<river>> returnRiverData(vector<vector<vVertexPoint*>>);
 
 
 };

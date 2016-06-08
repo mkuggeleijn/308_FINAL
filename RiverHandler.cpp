@@ -175,7 +175,7 @@ void RiverHandler::drawAll() {
 	//cout << "Found " << graph->getPolygons().size() << " polygons, with " << graph->getPolyEdges().size() << " edges." << endl;
 
 	drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
-	drawEdges(graph->getPolyEdges(), &pointDisplay, cYellow);
+	//drawEdges(graph->getPolyEdges(), &pointDisplay, cYellow);
 	drawPoints(graph->getPolyVertices(), &pointDisplay, cRed ,cBlue, radius);
 	//drawPoints(graph->getTriVertices(), &pointDisplay, cWhite, cYellow, radius);
 	//drawPolygons(graph.getTriangles(), &pointDisplay, cGrey, cWhite, radius);
@@ -248,7 +248,7 @@ void RiverHandler::drawRiverSplines(vector<vector<vVertexPoint*>> riverSet, CImg
 			vector<vec4> riverSpline = splineMaker->makeRiverSpline(river);
 			for (int x = 1; x < riverSpline.size() - 3; x++) {
 				vec4 p0 = riverSpline.at(x);
-				vec4 p1 = riverSpline.at(x);
+				vec4 p1 = riverSpline.at(x+1);
 
 				int p0x = p0.x * (imageSize - 1);
 				int p0y = p0.y * (imageSize - 1);
@@ -266,9 +266,9 @@ void RiverHandler::drawRiverSplines(vector<vector<vVertexPoint*>> riverSet, CImg
 
 }
 
-void RiverHandler::drawRiverGL(vector<vector<vVertexPoint*>> riverSet){
+void RiverHandler::drawRiversGL(){
 
-	for (vector<vVertexPoint*> river : riverSet) {
+	for (vector<vVertexPoint*> river : rivers) {
 
 		if (river.size() > 1) {
 			vector<vec4> riverSpline = splineMaker->makeRiverSpline(river);
@@ -312,3 +312,4 @@ void RiverHandler::drawPolygons(vector<vTriangle*> polys, CImg<unsigned char> *p
 		}
 	}
 }
+
