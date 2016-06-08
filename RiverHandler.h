@@ -11,6 +11,7 @@
 #include "simple_image.hpp"
 #include "CImg.h"
 #include "splineHandler.hpp"
+#include "geometry.hpp"
 //#include "riverData.hpp"
 
 using namespace std;
@@ -31,6 +32,7 @@ private:
 	CImg<unsigned char> drawheightMap = CImg<unsigned char>("./work/res/textures/simplebump.pgm");
 	int imageSize = drawheightMap.width();
 	//int imageSize = 1024;
+	Geometry *meshDisplay = nullptr;
 
 	VoronoiHandler *graph;
 	splineHandler *splineMaker;
@@ -56,10 +58,15 @@ private:
 	
 	void drawPolygons(vector<vTriangle*>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 
+	Geometry* makeGeo(vector<vTriangle*>);
+
 public:
 	RiverHandler();
 	void drawRiversGL();
 	void drawAll();
+	Geometry* getGeo();
+
+	
 
 	//vector <vector<river>> returnRiverData(vector<vector<vVertexPoint*>>);
 

@@ -21,7 +21,7 @@
 
 #include "cgra_math.hpp"
 #include "opengl.hpp"
-#include <unordered_map>
+
 
 struct vertex {
 	int p = 0; // index for point in m_points
@@ -30,37 +30,37 @@ struct vertex {
 };
 
 struct triangle {
-	vertex v[3]; // requires 3 verticies;
+	vertex v[3]; //requires 3 verticies
 };
 
 class Geometry {
 private:
 
-	// Fields for storing raw obj information
+	// Feilds for storing raw obj information
 	std::string m_filename;
 	std::vector<cgra::vec3> m_points;	// Point list
 	std::vector<cgra::vec2> m_uvs;		// Texture Coordinate list
 	std::vector<cgra::vec3> m_normals;	// Normal list
 	std::vector<triangle> m_triangles;	// Triangle/Face list
 
-	bool m_wireFrameOn = false;
 
 	// IDs for the display list to render
 	GLuint m_displayListPoly = 0; // DisplayList for Polygon
-	GLuint m_displayListWire = 0; // DisplayList for Wireframe
+
 
 	void readOBJ(std::string);
 
 	void createNormals();
 
 	void createDisplayListPoly();
-	void createDisplayListWire();
+
 
 public:
 	Geometry(std::string);
+	Geometry(std::vector<std::vector<cgra::vec3>>);
 	~Geometry();
 
 	void renderGeometry();
-	void toggleWireFrame();
+
 	
 };

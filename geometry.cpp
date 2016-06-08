@@ -20,7 +20,6 @@
 #include <stdexcept>
 #include <vector>
 
-// #include "cgra_cow.hpp"
 #include "cgra_math.hpp"
 #include "geometry.hpp"
 #include "opengl.hpp"
@@ -34,8 +33,61 @@ Geometry::Geometry(string filename) {
 	readOBJ(filename);
 	if (m_triangles.size() > 0) {
 		createDisplayListPoly();
-		createDisplayListWire();
 	}
+}
+
+Geometry::Geometry(std::vector<std::vector<cgra::vec3>> triangles) {
+	cout << "Building geometry from triangle data" << endl;
+	// Make sure our geometry information is cleared
+	m_points.clear();
+	m_uvs.clear();
+	m_normals.clear();
+	m_triangles.clear();
+
+	// Load dummy points because OBJ indexing starts at 1 not 0
+	m_points.push_back(vec3(0, 0, 0));
+	m_uvs.push_back(vec2(0, 0));
+	m_normals.push_back(vec3(0, 0, 1));
+
+	for (std::vector<cgra::vec3> t : triangles) {
+		vertex v0, v1, v2;
+
+		m_points.push_back(t.at(0));
+		v0.p = m_points.size()-1;
+
+		m_points.push_back(t.at(1));
+		v1.p = m_points.size() - 1;
+
+		m_points.push_back(t.at(2));
+		v2.p = m_points.size() - 1;
+
+		cout << "Adding " << t.at(0) << ", " << t.at(1) << "," << t.at(2) << endl;
+
+		triangle tri;
+
+		tri.v[0] = v0;
+		tri.v[1] = v1;
+		tri.v[2] = v2;
+
+		m_triangles.push_back(tri);
+
+	}
+	
+
+	cout << "Made geo from data." << endl;
+	cout << m_points.size() - 1 << " points" << endl;
+	cout << m_uvs.size() - 1 << " uv coords" << endl;
+	cout << m_normals.size() - 1 << " normals" << endl;
+	cout << m_triangles.size() << " faces" << endl;
+
+	//if (m_normals.size() <= 1) createNormals();
+
+	cout << "Generated " <<m_normals.size()-1 << " normals." << endl;
+
+	if (m_triangles.size() > 0) {
+		createDisplayListPoly();
+	}
+
 }
 
 
@@ -54,6 +106,7 @@ void Geometry::readOBJ(string filename) {
 	m_points.push_back(vec3(0,0,0));
 	m_uvs.push_back(vec2(0,0));
 	m_normals.push_back(vec3(0,0,1));
+
 
 	ifstream objFile(filename);
 
@@ -114,40 +167,35 @@ void Geometry::readOBJ(string filename) {
 					// Hint : Check if there is more than one uv or normal in
 					// the uv or normal vector and then parse appropriately.
 					//-------------------------------------------------------------
-					
-					objLine >> v.p;					// Scan in position index
 
-					if (m_uvs.size() <= 1 && m_normals.size() <= 1){ 	// v only, do nothing further (eg; dragon.obj)
-					} else {
-						if (m_uvs.size() <= 1) {			// v//vn (eg; bunny.obj)
-							// cout << "No vt data" << endl;
-							objLine.ignore(1);			// Ignore the '/' character
-							objLine.ignore(1);			// Ignore the next '/' character
-							objLine >> v.n;				// Scan in normal index
-
-						} else {					// v/vt/vn (eg; teapot.obj)
-							objLine.ignore(1);			// Ignore the '/' character
-							objLine >> v.t;				// Scan in uv (texture coord) index
-							objLine.ignore(1);			// Ignore the '/' character
-							objLine >> v.n;				// Scan in normal index
-							}
+					// Assignment code (assumes you have all of v/vt/vn for each vertex)
+					if(m_points.size() > 1 && m_uvs.size() > 1 && m_normals.size() >1){
+						objLine >> v.p;		// Scan in position index
+						objLine.ignore(1);	// Ignore the '/' character
+						objLine >> v.t;		// Scan in uv (texture coord) index
+						objLine.ignore(1);	// Ignore the '/' character
+						objLine >> v.n;		// Scan in normal index
+						verts.push_back(v);
+					} else if(m_points.size() > 1 && m_uvs.size() <= 1 && m_normals.size() >1){
+						objLine >> v.p;	// Scan in position index
+						objLine.ignore(2);	// Ignore the '//' characters
+						objLine >> v.n;	// Scan in normal index
+						verts.push_back(v);
+					} else if(m_points.size() > 1 && m_uvs.size() <= 1 && m_normals.size() <=1){
+						objLine >> v.p;	// Scan in position index
+						verts.push_back(v);
 					}
-
-					verts.push_back(v);
 				}
 
-				// If we have 3 vertices, construct a triangle
+				// IFF we have 3 verticies, construct a triangle face
 				if(verts.size() >= 3){
 					triangle tri;
 					tri.v[0] = verts[0];
 					tri.v[1] = verts[1];
 					tri.v[2] = verts[2];
 					m_triangles.push_back(tri);
-					tri.v[0].n = 0;
-					tri.v[1].n = 0;
-					tri.v[2].n = 0;
 
-				}
+				} //else {cout << filename << "  : verts.size: " << verts.size() << endl;}
 			}
 		}
 	}
@@ -158,9 +206,11 @@ void Geometry::readOBJ(string filename) {
 	cout << m_normals.size()-1 << " normals" << endl;
 	cout << m_triangles.size() << " faces" << endl;
 
+
 	// If we didn't have any normals, create them
 	if (m_normals.size() <= 1) createNormals();
 }
+
 
 //-------------------------------------------------------------
 // [Assignment 1] :
@@ -169,48 +219,56 @@ void Geometry::readOBJ(string filename) {
 // first and get that working before moving onto calculating
 // per vertex normals.
 //-------------------------------------------------------------
-
 void Geometry::createNormals() {
-	
-	// Remember; a Normal is the cross product of two vectors
+	// YOUR CODE GOES HERE
 
-	cout << "Creating Normals..." << endl;
-	cout << "Triangles: " << m_triangles.size() << endl;
-
-	// First calculate face normals for each triangle
-
-	for (triangle &tri : m_triangles) {
-
-		// vector from points;
-		// end point - start point = vector
-
-		vec3 v1 = m_points[tri.v[1].p] - m_points[tri.v[0].p];
-		vec3 v2 = m_points[tri.v[2].p] - m_points[tri.v[0].p];
-	
-		vec3 fn = cross(v1,v2);
-		// fn = normalize(fn);
-
-		for(vertex &vert : tri.v){
-			if (vert.n == 0) {
-				m_normals.push_back(fn);
-				vert.n = m_normals.size()-1;
-			} else {
-				m_normals[vert.n] = normalize(m_normals[vert.n] + fn);		
-			}
-
-		}
-
-
+	for(unsigned int i=0;i<m_triangles.size();i++){
+		m_triangles[i].v[0].n = m_triangles[i].v[0].p;
+		m_triangles[i].v[1].n = m_triangles[i].v[1].p;
+		m_triangles[i].v[2].n = m_triangles[i].v[2].p;
 	}
 
-	
+	// makes a 2d vector, first index is point number in m_points
+	// and second index is face number in m_triangles
+	vector< vector<int> > shared_points(m_points.size()); // [point index][face index]
+	for(unsigned int i=0;i<m_triangles.size();i++){
+		for(int j=0; j<3; j++){
+			triangle tri = m_triangles[i];
+			int i_point = tri.v[j].p;
+			int i_face = i;
+			shared_points[i_point].push_back(i_face);
+		}
+	}
+
+
+	for(int i=1; i<shared_points.size(); i++){
+		// add then normalize all faces that share particular point
+		triangle tri;
+		vec3 vertex_normal(0.0,0.0,0.0);
+		int count = 0; // count how many faces share this face -- could remove and use shared_points[i].size()
+		for(int j=0; j<shared_points[i].size(); j++){
+			tri = m_triangles[shared_points[i][j]];
+			vec3 u = m_points[tri.v[0].p] - m_points[tri.v[1].p];
+			vec3 v = m_points[tri.v[0].p] - m_points[tri.v[2].p];
+			vertex_normal += cross(u,v);
+			count++;
+
+		}
+		if(count > 1){
+			//vertex_normal /= float(count);
+			vertex_normal = normalize(vertex_normal);
+		}
+		cout << "Generated normal: " << vertex_normal << endl;
+		m_normals.push_back(vertex_normal);
+	}
+
 }
 
 
 //-------------------------------------------------------------
 // [Assignment 1] :
 // Fill the following function to create display list
-// of the obj file to show it as polygon model
+// of the obj file to show it as wireframe model
 //-------------------------------------------------------------
 void Geometry::createDisplayListPoly() {
 	// Delete old list if there is one
@@ -221,99 +279,59 @@ void Geometry::createDisplayListPoly() {
 	m_displayListPoly = glGenLists(1);
 	glNewList(m_displayListPoly, GL_COMPILE);
 
+	// YOUR CODE GOES HERE
+	// ...
 	glBegin(GL_TRIANGLES);
+	for(unsigned int i=0; i<m_triangles.size();i++){
+		triangle tri = m_triangles[i];
 
-	for (int x = 0; x < m_triangles.size(); x++) {
-		
-		vertex vert1 = m_triangles[x].v[0];
-		vertex vert2 = m_triangles[x].v[1];
-		vertex vert3 = m_triangles[x].v[2];
+		//look up p1, p2, p3 vectors
+		for(unsigned int j=0;j<3;j++){
 
-		glNormal3f(m_normals[vert1.n].x, m_normals[vert1.n].y, m_normals[vert1.n].z);
-		if (m_uvs.size() > 1) { 
-			//cout << m_uvs[vert1.t] << endl;
-			glTexCoord2f(m_uvs[vert1.t].x, m_uvs[vert1.t].y); 
+			if(m_normals.size() > 1){
+				vec3 vn = m_normals[tri.v[j].n];
+				GLfloat nx,ny,nz;
+				nx = vn.x;
+				ny = vn.y;
+				nz = vn.z;
+				glNormal3f(nx,ny,nz);
+			}
+
+			if(m_uvs.size() > 1){
+				vec2 vt = m_uvs[tri.v[j].t];
+				GLfloat tx,ty;
+				tx = vt.x; //should be u,v instead of xy for texture co-ords
+				ty = vt.y; //should be u,v instead of xy for texture co-ords
+				glTexCoord2f(tx,ty);
+			}
+
+			vec3 vp = m_points[tri.v[j].p];
+			GLfloat px,py,pz;
+			px = vp.x;
+			py = vp.y;
+			pz = vp.z;
+			glVertex3f(px,py,pz);
 		}
-		glVertex3f(m_points[vert1.p].x,m_points[vert1.p].y,m_points[vert1.p].z);
-
-		glNormal3f(m_normals[vert2.n].x, m_normals[vert2.n].y, m_normals[vert2.n].z);
-		if (m_uvs.size() > 1) {
-			//cout << m_uvs[vert2.t]<< endl;
-			glTexCoord2f(m_uvs[vert2.t].x, m_uvs[vert2.t].y); 
-		}
-		glVertex3f(m_points[vert2.p].x,m_points[vert2.p].y,m_points[vert2.p].z);
-
-		glNormal3f(m_normals[vert3.n].x, m_normals[vert3.n].y, m_normals[vert3.n].z);
-		if (m_uvs.size() > 1) { 
-			//cout << m_uvs[vert3.t] << endl;
-			glTexCoord2f(m_uvs[vert3.t].x, m_uvs[vert3.t].y); 
-		}
-		glVertex3f(m_points[vert3.p].x,m_points[vert3.p].y,m_points[vert3.p].z);
 	}
 	glEnd();
+
+	/*
+	glBegin(GL_TRIANGLES);
+	glNormal3f(0, 0, 1);
+	glVertex3f(10.0, 10.0, 0.0);
+	glVertex3f(10.0, -10.0, 0.0);
+	glVertex3f(-10.0, 10.0, 0.0);
+	glEnd();
+	*/
 	glEndList();
 	cout << "Finished creating Poly Geometry" << endl;
 }
 
 
-//-------------------------------------------------------------
-// [Assignment 1] :
-// Fill the following function to create display list
-// of the obj file to show it as wireframe model
-//-------------------------------------------------------------
-void Geometry::createDisplayListWire() {
-	// Delete old list if there is one
-	if (m_displayListWire) glDeleteLists(m_displayListWire, 1);
-
-	// Create a new list
-	cout << "Creating Wire Geometry" << endl;
-	m_displayListWire = glGenLists(1);
-	glNewList(m_displayListWire, GL_COMPILE);
-
-	for (int x = 0; x < m_triangles.size(); x++) {
-
-		glBegin(GL_LINE_LOOP);
-		
-		vertex vert1 = m_triangles[x].v[0];
-		vertex vert2 = m_triangles[x].v[1];
-		vertex vert3 = m_triangles[x].v[2];
-
-		glNormal3f(m_normals[vert1.n].x, m_normals[vert1.n].y, m_normals[vert1.n].z);
-		glVertex3f(m_points[vert1.p].x,m_points[vert1.p].y,m_points[vert1.p].z);
-
-		glNormal3f(m_normals[vert2.n].x, m_normals[vert2.n].y, m_normals[vert2.n].z);
-		glVertex3f(m_points[vert2.p].x,m_points[vert2.p].y,m_points[vert2.p].z);
-
-		glNormal3f(m_normals[vert3.n].x, m_normals[vert3.n].y, m_normals[vert3.n].z);
-		glVertex3f(m_points[vert3.p].x,m_points[vert3.p].y,m_points[vert3.p].z);
-
-		glEnd();
-	}
-
-	glEndList();
-	cout << "Finished creating Wire Geometry" << endl;
-}
-
 
 void Geometry::renderGeometry() {
-	/*
-	if (m_wireFrameOn) {
-		glShadeModel(GL_SMOOTH);
-		glCallList(m_displayListWire);
 
-	} else {
-		glShadeModel(GL_SMOOTH);
+		//glShadeModel(GL_SMOOTH);
 		glCallList(m_displayListPoly);
-
-	}
-	*/
-	glShadeModel(GL_SMOOTH);
-	glCallList(m_displayListPoly);
-
-}
-
-
-void Geometry::toggleWireFrame() {
-	m_wireFrameOn = !m_wireFrameOn;
 }
 
