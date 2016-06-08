@@ -565,7 +565,7 @@ void VoronoiHandler::sampleImage(int imageSize, Image *heightMap) {
 		int y = p->getCoords().y * (imageSize - 1);
 		p->screenCoords = vec2(x, y);
 		p->setZValue(heightMap->getIntensity(x, y));
-		cout << "PolyVertex at " << p->screenCoords << ", Intensity " << p->getZValue() << endl;
+		//cout << "PolyVertex at " << p->screenCoords << ", Intensity " << p->getZValue() << endl;
 	}
 
 	for (vVertexPoint * p : polyCenters) {

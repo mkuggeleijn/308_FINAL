@@ -18,6 +18,7 @@ SET(headers
 	"vTriangle.h"
 	"RiverPoint.h"
 	"RiverHandler.h"
+	"splineHandler.hpp"
 )
 
 
@@ -32,6 +33,7 @@ SET(sources
 	"vTriangle.cpp"
 	"RiverPoint.cpp"
 	"RiverHandler.cpp"
+	"splineHandler.cpp"
 
 )
 

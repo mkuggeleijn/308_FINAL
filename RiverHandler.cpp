@@ -5,6 +5,7 @@ RiverHandler::RiverHandler() {
 	heightMap = new Image("./work/res/textures/simplebump.png");
 
 	this -> graph = new VoronoiHandler(density);
+	this->splineMaker = new splineHandler();
 	graph -> sampleImage(imageSize, heightMap);
 	this -> riverSources = findSourceCandidates(graph->getPolyVertices());
 	cout << "Found " << riverSources.size() << " river source candidates." << endl;
@@ -45,7 +46,7 @@ vector<vVertexPoint*>RiverHandler::findSourceCandidates(vector<vVertexPoint*> ri
 	vector<vVertexPoint*>riverSources;
 
 	int riverCutOff = riverPoints.size() * (cutoffPercent / 100.0);
-	cout << "riverCutOff: " << riverCutOff;
+	//cout << "riverCutOff: " << riverCutOff;
 	if (riverCutOff > riverPoints.size()) riverCutOff = riverPoints.size();
 	if (riverCutOff < 1) riverCutOff = 1;
 
@@ -92,6 +93,7 @@ vector<vector<vVertexPoint*>> RiverHandler::makeRivers(int numberOfRivers, vecto
 vector<vVertexPoint*> RiverHandler::makeRiverPath(vVertexPoint* source) {
 
 	source->setRiver(true);
+	source->setWater(startWater);
 	vector<vVertexPoint*> river;
 	river.push_back(source);
 	source->setDownstream(getNextRiverPoint(source, &river));
@@ -101,8 +103,8 @@ vector<vVertexPoint*> RiverHandler::makeRiverPath(vVertexPoint* source) {
 // Find the next point of the river
 vVertexPoint* RiverHandler::getNextRiverPoint(vVertexPoint *parent, vector<vVertexPoint*> *river) {
 
-	cout << "Node " << parent << ": Neighbours: " << parent->getNeighbours().size() << "\tEdges: " << parent->getEdges().size();
-	cout << "\tIntensity: " << parent->getZValue() << endl;
+	//cout << "Node " << parent << ": Neighbours: " << parent->getNeighbours().size() << "\tEdges: " << parent->getEdges().size();
+	//cout << "\tIntensity: " << parent->getZValue() << endl;
 
 	vector<vVertexPoint*> neighbours = parent->getNeighbours();
 	sort(neighbours.begin(), neighbours.end(), sortByLesserZ());
@@ -125,12 +127,12 @@ vVertexPoint* RiverHandler::getNextRiverPoint(vVertexPoint *parent, vector<vVert
 	// if (next->getZValue() > parent->getZValue()) local minimum, tricky
 
 	next->setRiver(true);
-	float water = distance(next->getCoords(), parent->getCoords());
+	float water = distance(next->getCoords(), parent->getCoords())*waterScalar;
 	next->updateFlow(water);
 	river->push_back(next);
 
-	cout << "Riverpoint " << next << " at " << next->screenCoords << ": Intensity " << next->getZValue();
-	cout << ", isBorder " << next->isBorder() << endl;
+	//cout << "Riverpoint " << next << " at " << next->screenCoords << ": Intensity " << next->getZValue();
+	//cout << ", isBorder " << next->isBorder() << endl;
 
 	// If we've hit the mesh edge
 	if (next->isBorder()) {
@@ -172,12 +174,13 @@ void RiverHandler::drawAll() {
 	cout << "Found " << graph->getTriangles().size() << " triangles, with " << graph->getTriEdges().size() << " edges." << endl;
 	//cout << "Found " << graph->getPolygons().size() << " polygons, with " << graph->getPolyEdges().size() << " edges." << endl;
 
-	//drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
+	drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
 	drawEdges(graph->getPolyEdges(), &pointDisplay, cYellow);
 	drawPoints(graph->getPolyVertices(), &pointDisplay, cRed ,cBlue, radius);
 	//drawPoints(graph->getTriVertices(), &pointDisplay, cWhite, cYellow, radius);
 	//drawPolygons(graph.getTriangles(), &pointDisplay, cGrey, cWhite, radius);
-	drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
+	// drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
+	drawRiverSplines(rivers, &pointDisplay, cWhite, cWhite, radius);
 
 	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
 	while (!draw_disp.is_closed()) {
@@ -222,6 +225,70 @@ void RiverHandler::drawRivers(vector<vector<vVertexPoint*>> riverSet, CImg<unsig
 				pointDisplay->draw_line(points[0], points[1], points[2], points[3], lineColor);
 			}
 		}
+	}
+
+}
+
+
+void RiverHandler::drawRiverSplines(vector<vector<vVertexPoint*>> riverSet, CImg<unsigned char> *pointDisplay, const unsigned char lineColor[], const unsigned char nodeColor[], int radius) {
+	for (vector<vVertexPoint*> river : riverSet) {
+
+		for (vVertexPoint* r : river) {
+			//cout << "Riverpoint " << r << " at " << r->screenCoords << endl;
+			int p0x = r->screenCoords.x;
+			int p0y = r->screenCoords.y;
+			pointDisplay->draw_circle(p0x, p0y, radius, nodeColor);
+		}
+
+		if (river.size() == 2) {
+			vec2 p0 = river.at(0)->getCoords();
+			vec2 p1 = river.at(1)->getCoords();
+			pointDisplay->draw_line(p0.x, p0.y, p1.x, p1.y, lineColor);
+		} else if (river.size() > 2) {
+			vector<vec4> riverSpline = splineMaker->makeRiverSpline(river);
+			for (int x = 1; x < riverSpline.size() - 3; x++) {
+				vec4 p0 = riverSpline.at(x);
+				vec4 p1 = riverSpline.at(x);
+
+				int p0x = p0.x * (imageSize - 1);
+				int p0y = p0.y * (imageSize - 1);
+				int p1x = p1.x * (imageSize - 1);
+				int p1y = p1.y * (imageSize - 1);
+
+				pointDisplay->draw_line(p0x, p0y, p1x, p1y, lineColor);
+
+			}
+	
+		}
+
+
+	}
+
+}
+
+void RiverHandler::drawRiverGL(vector<vector<vVertexPoint*>> riverSet){
+
+	for (vector<vVertexPoint*> river : riverSet) {
+
+		if (river.size() > 1) {
+			vector<vec4> riverSpline = splineMaker->makeRiverSpline(river);
+			for (int x = 1; x < riverSpline.size() - 3; x++) {
+				vec4 p0 = riverSpline.at(x);
+				vec4 p1 = riverSpline.at(x+1);
+				float width = p0.z*widthScalar;
+
+				glLineWidth(width);
+				glBegin(GL_LINES);
+					glVertex2f(p0.x, p0.y);
+					glVertex2f(p1.x, p1.y);
+				glEnd();
+
+
+			}
+
+		}
+
+
 	}
 
 }

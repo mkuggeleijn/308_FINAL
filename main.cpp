@@ -41,7 +41,7 @@ int relaxPasses = 0;
 
 // SimpleGrid pointGrid(20);
 
-Image tex2("./work/res/textures/test_heightmap.png");
+Image tex2("./work/res/textures/simplebump.png");
 // Spotlight
 
 float spotX = 0.0f;
