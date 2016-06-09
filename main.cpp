@@ -18,249 +18,13 @@
 #include <string>
 #include <stdexcept>
 
-#include "cgra_geometry.hpp"
-#include "geometry.hpp"
 #include "cgra_math.hpp"
-#include "simple_image.hpp"
-#include "simple_shader.hpp"
 #include "opengl.hpp"
-#include "spotlight.h"
+#include "geometry.hpp"
 #include "RiverHandler.h"
-#include "CImg.h"
 
 using namespace std;
 using namespace cgra;
-using namespace cimg_library;
-
-/*
-int imageSize = 600;
-int density = 200;
-int radius = 2;
-int relaxPasses = 0;
-*/
-
-// SimpleGrid pointGrid(20);
-
-GLuint g_rivermap = 0;
-RiverHandler rHandler;
-
-// not using this at the moment
-void makeRiverTexture() {
-	int w = 1024, h = 1024;
-
-	GLuint fbo = 0;
-
-	glGenFramebuffers(1, &fbo);
-
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-	glActiveTexture(GL_TEXTURE1);
-
-	glGenTextures(1, &g_rivermap);
-	glBindTexture(GL_TEXTURE_2D, g_rivermap);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, w, h, 0, GL_RGBA, GL_FLOAT, nullptr);  // had to change this from GL_RED8
-	glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_rivermap, 0);
-
-
-	GLenum bufs[]{ GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, bufs);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-	glViewport(0, 0, w, h);
-
-
-	// Clear to 0
-	glClearColor(0.5f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
-	glDisable(GL_LIGHTING);
-
-	glUseProgram(0);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(-1.0, -1.0, 0.0);
-	glScalef(2.0, 2.0, 1.0);
-
-	glColor3f(1.0, 1.0, 1.0);
-	glLineWidth(2);
-	glBegin(GL_LINES);
-	glVertex2f(0.1, 0.1);
-	glVertex2f(0.9, 0.9);
-	glEnd();
-
-	//rHandler.drawRiversGL();
-
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glDeleteFramebuffers(1, &fbo);
-
-
-}
-
-
-Image tex2("./work/res/textures/simplebump.png");
-Image tex3("./work/res/textures/rivertest.png");
-// Spotlight
-
-float spotX = 0.0f;
-float spotY = 6.0f;
-float spotZ = 1.0f;
-
-float spotRotX = 90.0f;
-float spotRotY = 0.0f;
-float spotRotZ = 0.0f;
-
-float spotDirX = 0.0f;
-float spotDirY = 0.0f;
-float spotDirZ = 1.0f;
-
-
-float spot_pos[] = { spotX, spotY, spotZ, 1.0f };
-float spot_dir[] = { 0.0, 0.0, 10.0 };
-float spot_intensity[] = { 1.0f, 0.8f, 0.2f, 1.0f };
-float spot_cutoff = 45.0;
-spotlight spot(spot_cutoff, spot_pos, spot_dir, spot_intensity);
-
-float spot_increment = 0.1;
-float spotDirIncrement = 1.0;
-
-// Camera rotation
-bool rotating = false;
-float rotation_increment = 1.0f;
-float current_rotation = 0.0f;
-
-//Colours
-vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
-vec4 green(0.0f, 1.0f, 0.0f, 1.0f);
-vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
-vec4 purple(1.0f, 0.0f, 1.0f, 1.0f);
-vec4 yellow(1.0f, 1.0f, 0.0f, 1.0f);
-vec4 cyan(0.0f, 1.0f, 1.0f, 1.0f);
-vec4 bone(0.99f, 1.0f, 0.0f, 0.98f);
-
-//Teapot colours
-vec4 bMetal_diffuse(0.7f, 0.7f, 0.9f, 1.0f);
-vec4 bMetal_ambient(0.25f, 0.25f, 0.25f, 1.0f);
-vec4 bMetal_specular(1.0f, 1.0f, 1.0f, 1.0f);
-float bMetal_shininess = 77.0f;
-
-//Torus colours
-vec4 rPlastic_diffuse(0.7f, 0.0f, 0.0f, 1.0f);
-vec4 rPlastic_specular(0.7f, 0.6f, 0.6f, 1.0f);
-float rPlastic_shiny = 32.0f;
-
-//Spehere colours
-
-vec4 bronze_ambient(0.24725f, 0.1995f, 0.0745f, 1.0f);
-vec4 bronze_diffuse(1.0f, 0.8f, 0.22648f, 1.0f);
-vec4 bronze_specular(1.01f, 1.0f, 1.0f, 1.0f);
-float bronze_shiny = 77.0f;
-
-vec4 black(0.0f, 0.0f, 0.0f, 0.0f);
-float matte_test = 20.0f;
-float shiny_test = 128.0f;
-
-// Locations
-vec4 teapot_position(-5.0, 0.5, -5.0, 1.0);
-vec4 box_position(5.0, 2.0, -5.0, 1.0);
-vec4 bunny_position(0.0, 0.5, 0.0, 1.0);
-vec4 sphere_position(-5.0, 2.0, 5.0, 1.0);
-vec4 table_position(0.0, 0.0, 0.0, 1.0);
-vec4 torus_position(5.0, 1.0, 5.0, 1.0);
-
-
-
-
-struct material {
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
-	vec4 emission;
-	float shininess;
-
-	material() {
-		ambient = black;
-		diffuse = black;
-		specular = black;
-		shininess = matte_test;
-		emission = black;
-	}
-
-	material(vec4 ambient,  vec4 diffuse, vec4 specular, vec4 emission, float shininess) {
-		this->ambient = ambient;
-		this->diffuse = diffuse;
-		this->specular = specular;
-		this->shininess = shininess;
-		this->emission = emission;
-	}
-};
-
-
-material mat_black(black, black, black, black, matte_test);
-
-material shiny_red(black, red, red, black, matte_test);
-material shiny_green(black, green, green, black, matte_test);
-material shiny_blue(black, blue, white, black, matte_test);
-material shiny_purple(black, purple, purple, black, matte_test);
-material shiny_yellow(black, yellow, yellow, black, matte_test);
-material shiny_cyan(black, cyan, cyan, black, matte_test);
-
-material matte_white(black, white, white, black, matte_test);
-
-material blue_metal(bMetal_ambient, bMetal_diffuse, bMetal_specular, black, bMetal_shininess);
-material red_plastic(black, rPlastic_diffuse, rPlastic_specular, black, rPlastic_shiny);
-material bronze_metal(bronze_ambient, bronze_diffuse, bronze_specular, black, bronze_shiny);
-material bonetest(black, white, white, black, bMetal_shininess);
-
-
-// Struct for Geometry, position, shading
-//
-struct geomEntry {
-
-	string name;
-	Geometry *geo;
-	vec4 position;
-	material g_material;
-
-	geomEntry() {
-		name = "none";
-		geo = nullptr;
-		position = vec4(0.0, 0.0, 0.0, 0.0);
-		g_material = mat_black;
-	}
-	geomEntry(string name, Geometry *geo, vec4 position, material mat) {
-		this->name = name;
-		this->geo = geo;
-		this->position = position;
-		this->g_material = mat;
-	}
-
-};
-
-vector<geomEntry> geometries;
-
-
-// Geometry
-//
-Geometry *g_teapot = nullptr;
-Geometry *g_table = nullptr;
-Geometry *g_sphere = nullptr;
-Geometry *g_torus = nullptr;
-Geometry *g_box = nullptr;
-Geometry *g_bunny = nullptr;
-
-
-
-
 
 // Window
 //
@@ -273,6 +37,9 @@ float g_fovy = 20.0;
 float g_znear = 0.1;
 float g_zfar = 1000.0;
 
+// Current rotation amount
+float g_rotation = 0.0;
+
 
 // Mouse controlled Camera values
 //
@@ -282,23 +49,36 @@ float g_pitch = 0;
 float g_yaw = 0;
 float g_zoom = 1.0;
 
-// Values and fields to showcase the use of shaders
-// Remove when modifying main.cpp for Assignment 3
+
+// Geometry loader and drawer
 //
-bool g_useShader = false;
-GLuint g_boxtexture = 0;
-GLuint g_tabletexture = 0;
-GLuint g_rivertexture = 1;
-GLuint g_reftex = 2;
+Geometry *g_geometry = nullptr;
+RiverHandler rHandler;
 
-GLuint g_shader = 0;
 
+
+
+//-------------------------------------------------------------
+// [Assignment 1] :
+// The following callback functions are used for processing
+// user input. Modify in EITHER of the following ways.
+//
+// Modify keyCallback so that when the 'r' key is pressed
+// rotate the camera around the model horizontally.
+//
+// or
+//
+// Modify the mouseButtonCallback and cursorPosCallback
+// functions so when the left mouse button is pressed and
+// dragged along the screen horizontally, the camera also
+// roates around the model horizontally.
+//-------------------------------------------------------------
 
 // Mouse Button callback
 // Called for mouse movement event on since the last glfwPollEvents
 //
 void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
-	// cout << "Mouse Movement Callback :: xpos=" << xpos << "ypos=" << ypos << endl;
+	
 	if (g_leftMouseDown) {
 		g_yaw -= g_mousePosition.x - xpos;
 		g_pitch -= g_mousePosition.y - ypos;
@@ -306,26 +86,58 @@ void cursorPosCallback(GLFWwindow* win, double xpos, double ypos) {
 	g_mousePosition = vec2(xpos, ypos);
 }
 
+//-------------------------------------------------------------
+// [Assignment 1] :
+// Modify the mouseCallback function in main.cpp so that when
+// the right mouse button is clicked, the wireframe mode on
+// Geometry is toggled on and off.
+//-------------------------------------------------------------
 
 // Mouse Button callback
 // Called for mouse button event on since the last glfwPollEvents
 //
 void mouseButtonCallback(GLFWwindow *win, int button, int action, int mods) {
-	// cout << "Mouse Button Callback :: button=" << button << "action=" << action << "mods=" << mods << endl;
-	if (button == GLFW_MOUSE_BUTTON_LEFT)
-		g_leftMouseDown = (action == GLFW_PRESS);
-	/*
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-		if (g_useShader) {
-			g_useShader = false;
-			cout << "Using the default OpenGL pipeline" << endl;
-		}
-		else {
-			g_useShader = true;
-			cout << "Using a shader" << endl;
-		}
-	}*/
 
+	// cout << "Mouse Button Callback :: button=" << button << "action=" << action << "mods=" << mods << endl;
+
+	switch(action) {
+		
+		case GLFW_PRESS:
+
+			switch(button) {
+
+				case GLFW_MOUSE_BUTTON_RIGHT:
+					//g_geometry->toggleWireFrame();
+					break;
+
+				case GLFW_MOUSE_BUTTON_LEFT:
+					cout << "Left Mouse Clicked" << endl;
+					double xpos, ypos;
+					glfwGetCursorPos(win,&xpos,&ypos);
+					g_mousePosition = vec2(xpos,ypos);
+					g_leftMouseDown = !g_leftMouseDown;
+					break;
+		
+			default:
+				break;
+			}
+			break;
+		case GLFW_RELEASE:
+
+			switch(button) {
+
+				case GLFW_MOUSE_BUTTON_LEFT:
+					cout << "Left Mouse Released" << endl;
+					double xpos, ypos;
+					glfwGetCursorPos(win,&xpos,&ypos);
+					g_mousePosition = vec2(xpos,ypos);
+					g_leftMouseDown = !g_leftMouseDown;
+					break;
+		
+			default:
+				break;
+			}
+	}
 }
 
 
@@ -342,95 +154,21 @@ void scrollCallback(GLFWwindow *win, double xoffset, double yoffset) {
 // Called for every key event on since the last glfwPollEvents
 //
 void keyCallback(GLFWwindow *win, int key, int scancode, int action, int mods) {
-	//cout << "Key Callback :: key=" << key << "scancode=" << scancode << "action=" << action << "mods=" << mods << endl;
+	// cout << "Key Callback :: key=" << key << "scancode=" << scancode << "action=" << action << "mods=" << mods << endl;
 
-	if (key == 84 && action == 1) {
-		rotating = !rotating;
+	switch(key) {
+		case 82: 
+			switch(action) {
+				case GLFW_REPEAT:
+					g_rotation++;
+					if (g_rotation == 360.0){g_rotation = 0;}
+				default:
+					break;			
+			}
+	
+		default:
+			break;
 	}
-
-	if (key == 334 && action == 1) {
-		//cout << "+ pressed. Current value: " << spot_cutoff << endl;
-		spot_cutoff = spot_cutoff + 1.0;
-		//cout << spot_cutoff << endl;
-		if (spot_cutoff > 90) spot_cutoff = 90;
-		spot.setCutoff(spot_cutoff);
-	}
-
-	if (key == 333 && action == 1) {
-		//cout << "+ pressed" << endl;
-		spot_cutoff = spot_cutoff - 1.0;
-		//cout << spot_cutoff << endl;
-		if (spot_cutoff < 0) spot_cutoff = 0;
-		spot.setCutoff(spot_cutoff);
-	}
-
-	if (key == 328 && action == 1) {
-		spotY += spot_increment;
-		//cout << "spotY: "<< spotY << endl;
-		spot.setPosition(spotX, spotY, spotZ, 1.0f);
-	}
-	if (key == 322 && action == 1) {
-		spotY -= spot_increment;
-		//cout << "spotY: " << spotY << endl;
-		spot.setPosition(spotX, spotY, spotZ, 1.0f);
-	}
-
-	if (key == 329 && action == 1) {
-		spotX += spot_increment;
-		//cout << "spotX: " << spotX << endl;
-		spot.setPosition(spotX, spotY, spotZ, 1.0f);
-	}
-
-	if (key == 321 && action == 1) {
-		spotX -= spot_increment;
-		//cout << "spotX: " << spotX << endl;
-		spot.setPosition(spotX, spotY, spotZ, 1.0f);
-	}
-
-	if (key == 327 && action == 1) {
-		spotZ -= spot_increment;
-		//cout << "spotZ: " << spotZ << endl;
-		spot.setPosition(spotX, spotY, spotZ, 1.0f);
-	}
-
-	if (key == 323 && action == 1) {
-		spotZ += spot_increment;
-		//cout << "spotZ: " << spotZ << endl;
-		spot.setPosition(spotX, spotY, spotZ, 1.0f);
-	}
-
-	if  (key == 87 && action == 1) {
-		spotRotX -= spotDirIncrement;
-		//cout << spotRotX << endl;
-		if (spotRotX <= -360) spotRotX = 0;
-	}
-
-	if (key == 83 && action == 1) {
-		spotRotX += spotDirIncrement;
-		if (spotRotX >= 360) spotRotX = 0;
-
-	}
-
-	if (key == 65 && action == 1) {
-		spotRotY += spotDirIncrement;
-		if (spotRotY >= 360) spotRotY = 0;
-
-	}
-
-	if (key == 68 && action == 1) {
-		spotRotY -= spotDirIncrement;
-		if (spotRotY <= -360) spotRotY = 0;
-	}
-	if (key == 81 && action == 1) {
-		spotRotZ += spotDirIncrement;
-		if (spotRotZ >= 360) spotRotZ = 0;
-	}
-
-	if (key == 69 && action == 1) {
-		spotRotZ -= spotDirIncrement;
-		if (spotRotZ <= -360) spotRotZ = 0;
-	}
-
 }
 
 
@@ -444,145 +182,24 @@ void charCallback(GLFWwindow *win, unsigned int c) {
 
 
 // Sets up where and what the light is
-// Called once on start up
 // 
-void initLight() {
-	float direction[] = { 0.0f, 0.0f, 1.0f, 0.0f };
-	//float diffintensity[] = { 0.7f, 0.7f, 0.7f, 1.0f };
-	float diffintensity[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	float ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	float specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, direction);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffintensity);
-	// glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+void setupLight() {
+	// No transform for the light
+	// makes it move realitive to camera
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
+	vec4 direction(0.0, 0.0, 1.0, 0.0);
+	vec4 diffuse(0.7, 0.7, 0.7, 1.0);
+	vec4 ambient(0.2, 0.2, 0.2, 1.0);
 
+	glLightfv(GL_LIGHT0, GL_POSITION, direction.dataPointer());
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuse.dataPointer());
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient.dataPointer());
+	
 	glEnable(GL_LIGHT0);
 }
 
-/*
-void initSpotLight() {
-
-
-
-	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45.0f);
-	// glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 100.0f);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, spot_intensity);
-	glLightfv(GL_LIGHT1, GL_POSITION, spot_pos);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spot_dir);
-
-	glEnable(GL_LIGHT1);
-}
-*/
-
-void initPointLight() {
-	float direction[] = { 0.0f, 10.0f, 0.0f, 1.0f };
-	float diffintensity[] = { 0.3f, 0.2f, 0.2f, 1.0f };
-	float specular[] = { 0.3f, 0.2f, 0.2f, 1.0f };
-
-	glLightfv(GL_LIGHT2, GL_POSITION, direction);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, diffintensity);
-	glLightfv(GL_LIGHT2, GL_SPECULAR, specular);
-
-	glEnable(GL_LIGHT2);
-
-}
-
-void initDirLight() {
-	float direction[] = { 0.f, 0.5f, -1.0f, 0.0f };
-	float diffintensity[] = { 0.1f, 0.1f, 0.3f, 1.0f };
-	float specular[] = { 0.1f, 0.1f, 0.3f, 1.0f };
-
-	glLightfv(GL_LIGHT3, GL_POSITION, direction);
-	glLightfv(GL_LIGHT3, GL_DIFFUSE, diffintensity);
-	glLightfv(GL_LIGHT3, GL_SPECULAR, specular);
-
-	glEnable(GL_LIGHT3);
-}
-
-void initAmbiLight() {
-	float ambient[] = { 0.00001f, 0.00001f, 0.0f, 1.0f };
-
-	glLightfv(GL_LIGHT4, GL_AMBIENT, ambient);
-	glEnable(GL_LIGHT4);
-}
-
-
-// An example of how to load a texure from a hardcoded location
-
-void initTableTexture() {
-	// Image tex2("./work/res/textures/test_heightmap.png");
-
-	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
-	glGenTextures(1, &g_tabletexture); // Generate texture ID
-	glBindTexture(GL_TEXTURE_2D, 0); // Bind it as a 2D texture
-
-											 // Setup sampling strategies
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	// Finnaly, actually fill the data into our texture
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex2.w, tex2.h, tex2.glFormat(), GL_UNSIGNED_BYTE, tex2.dataPointer());
-}
-
-void initRiverBumpTexture() {
-	// Image tex2("./work/res/textures/test_heightmap.png");
-
-	glActiveTexture(GL_TEXTURE1); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
-	glGenTextures(1, &g_rivertexture); // Generate texture ID
-	glBindTexture(GL_TEXTURE_2D, 1); // Bind it as a 2D texture
-
-									 // Setup sampling strategies
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	// Finnaly, actually fill the data into our texture
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex3.w, tex3.h, tex3.glFormat(), GL_UNSIGNED_BYTE, tex3.dataPointer());
-}
-
-
-// An example of how to load a shader from a hardcoded location
-//
-void initShader() {
-	// To create a shader program we use a helper function
-	// We pass it an array of the types of shaders we want to compile
-	// and the corrosponding locations for the files of each stage
-	g_shader = makeShaderProgramFromFile({GL_VERTEX_SHADER, GL_FRAGMENT_SHADER }, { "./work/res/shaders/shaderDemo.vert", "./work/res/shaders/shaderDemo.frag" });
-}
-
-
-void initGeometry() {
-
-	//g_teapot = new Geometry("./work/res/assets/teapot.obj");
-	//g_box = new Geometry("./work/res/assets/box.obj"); // Need a cube
-	g_table = new Geometry("./work/res/assets/plane.obj");
-	//g_bunny = new Geometry("./work/res/assets/bunny.obj");
-	//g_sphere = new Geometry("./work/res/assets/sphere.obj");
-	//g_torus = new Geometry("./work/res/assets/torus.obj");
-
-	//geomEntry teapot("teapot", g_teapot, teapot_position, blue_metal);
-	//geomEntry box("box", g_box, box_position, matte_white);
-	geomEntry table("table", g_table, table_position, matte_white);
-	//geomEntry bunny("bunny",g_bunny, bunny_position, bonetest);
-	//geomEntry sphere("sphere",g_sphere, sphere_position, bronze_metal);
-	//geomEntry torus("torus",g_torus, torus_position, red_plastic);
-
-	// cout << "Teapot shininess: " << teapot.g_material.shininess << endl;
-
-	geometries.push_back(table);
-	//geometries.push_back(teapot);
-	//geometries.push_back(box);
-	//geometries.push_back(sphere);
-	//geometries.push_back(torus);
-	//geometries.push_back(bunny);
-}
 
 // Sets up where the camera is in the scene
 // 
@@ -596,150 +213,61 @@ void setupCamera(int width, int height) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glTranslatef(0, 0, -50 * g_zoom);
+	// YOUR CODE GOES HERE
+	glTranslatef(0, 0, -5 * g_zoom);
 	glRotatef(g_pitch, 1, 0, 0);
 	glRotatef(g_yaw, 0, 1, 0);
 }
-/*
-void setupBoxTex() {
 
-	glEnable(GL_TEXTURE_2D);
 
-	// Use Texture as the color
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	// Set the location for binding the texture
-	glActiveTexture(GL_TEXTURE0);
-
-	glMatrixMode(GL_TEXTURE); 
-	glLoadIdentity(); 
-	glScalef(-4.0f, -4.0f, 1.0f); 
-	// Bind the texture
-	glBindTexture(GL_TEXTURE_2D, 1);
-}
-*/
-/*
-void setupTableTex() {
-
-	glEnable(GL_TEXTURE_2D);
-
-	// Use Texture as the color
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	// Set the location for binding the texture
-	glActiveTexture(GL_TEXTURE0);
-
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity(); 
-	//glScalef(-5.0f, -5.0f, 1.0f);
-
-	// Bind the texture
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
-
-}
-*/
-
-/*
-void setupRefTex() {
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_CUBE_MAP);
-	
-	// glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 3);
-	glEnable(GL_TEXTURE_GEN_S);
-	glEnable(GL_TEXTURE_GEN_T);
-	glEnable(GL_TEXTURE_GEN_R);
-
-	//glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 3);
-
-}
-*/
-
-/*
-void setupEnvShader() {
-
-	glUniform1i(glGetUniformLocation(g_shader, "texture0"), 0);
-	//glUniform3fv(glGetUniformLocation(g_shader, "cameraPos"), 1, cam.dataPointer());
-}
-*/
-
-// Draw function
+// Render one frame to the current window given width and height
 //
 void render(int width, int height) {
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	// Set viewport to be the whole window
 	glViewport(0, 0, width, height);
 
+	// Setup light
+	setupLight();
+
+	// Setup camera
+	setupCamera(width, height);
+
 	// Grey/Blueish background
-	glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
-	//glClearColor(0.0f, 0.0f, 0.001f, 1.0f);
+	glClearColor(0.3f,0.3f,0.4f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	// Enable flags for normal rendering
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_NORMALIZE);
+	glEnable(GL_COLOR_MATERIAL);
 
-	setupCamera(width, height);
+	// Set the current material (for all objects) to red
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE); 
+	glColor3f(1.0f, 0.0f, 0.0f); //red
 
-
-
-
-	// With shaders (no lighting)
-	// Uses the shaders that you bind for the graphics pipeline
-	//
-
-	glUseProgram(g_shader);
-	glUniform1i(glGetUniformLocation(g_shader, "texture0"), 0);
-	glUniform1i(glGetUniformLocation(g_shader, "texture1"), 1);
-	glUniform1f(glGetUniformLocation(g_shader, "amplitude"), 2.0);
-	glUniform1f(glGetUniformLocation(g_shader, "riverScalar"), 2.0);
+	// Render geometry
+	glPushMatrix(); {
+		glScalef(10.0, 1.0, 10.0);
+		g_geometry->renderGeometry();
 
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, g_tabletexture);
-	
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, g_rivertexture);
-	
-	//glActiveTexture(GL_TEXTURE0);
+		//glBegin(GL_TRIANGLES);
+		//glNormal3f(0, 0, 1);
+		//glVertex3f(10.0, 10.0, 0.0);
+		//glVertex3f(10.0, -10.0, 0.0);
+		//glVertex3f(-10.0, 10.0, 0.0);
+		//glEnd();
+		//glFlush();
 
-	// Use the shader we made
-
-	// Set our sampler (texture0) to use GL_TEXTURE0 as the source
-
-	
-
-
-		
-	
-
-	// Render a single square as our geometry
-	// You would normally render your geometry here
-	// initSpotLight();
-
-	for (geomEntry g : geometries) {
-		glPushMatrix; {
-			glTranslatef(g.position.x, g.position.y, g.position.z);
-			glScalef(10.0, 1.0, 10.0);
-			g.geo->renderGeometry();
-			glTranslatef(-g.position.x, -g.position.y, -g.position.z);
-		}glPopMatrix;
-	}
-
-	// Unbind our shader
-	glUseProgram(0);
-
+	}glPopMatrix();
 
 	// Disable flags for cleanup (optional)
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_NORMALIZE);
+	glDisable(GL_COLOR_MATERIAL);
 }
 
 
@@ -750,6 +278,17 @@ void APIENTRY debugCallbackARB(GLenum, GLenum, GLuint, GLenum, GLsizei, const GL
 //Main program
 // 
 int main(int argc, char **argv) {
+
+
+	// Check argument list
+	/*
+	if(argc != 2){
+		cout << "Obj filename expected, eg:" << endl << "    ./a1 teapot.obj" << endl;
+		abort(); // Unrecoverable error
+	}
+	*/
+
+
 	// Initialize the GLFW library
 	if (!glfwInit()) {
 		cerr << "Error: Could not initialize GLFW" << endl;
@@ -761,7 +300,7 @@ int main(int argc, char **argv) {
 	glfwGetVersion(&glfwMajor, &glfwMinor, &glfwRevision);
 
 	// Create a windowed mode window and its OpenGL context
-	g_window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
+	g_window = glfwCreateWindow(640, 480, "COMP308 Assignment 1", nullptr, nullptr);
 	if (!g_window) {
 		cerr << "Error: Could not create GLFW window" << endl;
 		abort(); // Unrecoverable error
@@ -808,102 +347,44 @@ int main(int argc, char **argv) {
 		glDebugMessageCallbackARB(debugCallbackARB, nullptr);
 		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true);
 		cout << "GL_ARB_debug_output callback installed" << endl;
-	}
-	else {
+	} else {
 		cout << "GL_ARB_debug_output not available. No worries." << endl;
 	}
 
-	//CImg stuff
-	//CImg<unsigned char> heightMap("./work/res/textures/test_heightmap.pgm");
-	//imageSize = heightMap.width();
-
-	//CImg<unsigned char>  pointDisplay(imageSize, imageSize, 1, 3, 0);
-	//CImg<unsigned char>  pointDisplay2(imageSize, imageSize, 1, 3, 0);
-
-	//pointDisplay.assign("./work/res/textures/test_heightmap.pgm");
-	// pointDisplay.channel(3);
 	/*
-	const unsigned char cRed[] = { 255,0,0 };
-	const unsigned char cBlue[] = { 0,0,255 };
-	const unsigned char cWhite[] = { 255,255,255 };
-	const unsigned char cYellow[] = { 255,255,0 };
-	*/
-	// VoronoiHandler vHandler(density);
-
-	//cout << "Generating Voronoi Polygons..." << endl;
-	//vector<vVertexPoint*> pointCloud = vHandler.generatePointSet(density);
-
-	//vector<vTriangle*> triangles = vHandler.generateTriangles(pointCloud);
-	//vector<vTriangle*> polygons = vHandler.generateVPolys(pointCloud);
-	//cout << "Drawing "<< vHandler.getTriangles().size() << " triangles" << endl;
-
-	// Draw Triangle Centers
-	/*
-	for (vTriangle *t : vHandler.getTriangles()) {
-		int cx = t->getCenter()->getCoords().x * (imageSize - 1);
-		int cy = t->getCenter()->getCoords().y * (imageSize - 1);
-		if (t->getCenter()->isBorder()) pointDisplay.draw_circle(cx, cy, radius, cBlue);
-		else pointDisplay.draw_circle(cx, cy, radius, cRed);
-	}
-	
-	// Draw Triangle Edges
-	/*
-	for (vEdge *e : vHandler.getTriEdges()) {
-		int p0x = e->v0->getCoords().x * (imageSize - 1);
-		int p0y = e->v0->getCoords().y * (imageSize - 1);
-		int p1x = e->v1->getCoords().x * (imageSize - 1);
-		int p1y = e->v1->getCoords().y * (imageSize - 1);
-
-		int points[4] = { p0x, p0y, p1x, p1y };
-
-		pointDisplay.draw_line(points[0], points[1], points[2], points[3], cWhite);
-		if (e->v0->isBorder()) pointDisplay.draw_circle(p0x, p0y, radius, cBlue);
-		if (e->v1->isBorder()) pointDisplay.draw_circle(p1x, p1y, radius, cBlue);
-	}
-	*/
-	/*
-	cout << "Drawing " << vHandler.getPolygons().size() << " polygons" << endl;
-
-	// Draw Polygon Edges
-	for (vEdge *e : vHandler.getPolyEdges()) {
-		int p0x = e->v0->getCoords().x * (imageSize - 1);
-		int p0y = e->v0->getCoords().y * (imageSize - 1);
-		int p1x = e->v1->getCoords().x * (imageSize - 1);
-		int p1y = e->v1->getCoords().y * (imageSize - 1);
-
-		int points[4] = { p0x, p0y, p1x, p1y };
-
-		pointDisplay.draw_line(points[0], points[1], points[2], points[3], cYellow);
-		// if (e->v0->isBorder()) pointDisplay.draw_circle(p0x, p0y, radius, cBlue);
-		// if (e->v1->isBorder()) pointDisplay.draw_circle(p1x, p1y, radius, cBlue);
-	}
-
-	// CImgDisplay draw_disp(pointDisplay, "Raw Mesh"), draw_disp2(pointDisplay2, "Relaxed Mesh");
-
-	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
+	glBegin(GL_TRIANGLES);
+	glNormal3f(0, 0, 1);
+	glVertex3f(10.0, 10.0, 0.0);
+	glVertex3f(10.0, -10.0, 0.0);
+	glVertex3f(-10.0, 10.0, 0.0);
+	glEnd();
 	*/
 
+	vector<vec3> tData;
+	vector<vector<vec3>> triData;
+
+	vec3 p0(10.0, 10.0, 0.0);
+	vec3 p1(10.0, -10.0, 0.0);
+	vec3 p2(-10.0, 10.0, 0.0);
+
+	tData.push_back(p0);
+	tData.push_back(p1);
+	tData.push_back(p2);
+
+	triData.push_back(tData);
 
 
-	
-	//rHandler.drawAll();
 
-	//makeRiverTexture();
-	initTableTexture();
-	initRiverBumpTexture();
+	// Initialize out scene
+	//g_geometry = new Geometry(argv[1]);
+	// g_geometry = new Geometry(triData);
+	g_geometry = rHandler.getGeo();
+	// g_geometry = new Geometry("./work/res/assets/bunny.obj");
 
-	initShader();
-	initGeometry();
 
-	spot_cutoff = 45.0;
-	spotX = 0.0f;
-	spotY = 6.0f;
-	spotZ = 1.0f;
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(g_window)) {
-
-		
 
 		// Make sure we draw to the WHOLE window
 		int width, height;
@@ -911,8 +392,7 @@ int main(int argc, char **argv) {
 
 		// Main Render
 		render(width, height);
-		//draw_disp.wait();
-		//draw_disp2.wait();
+
 		// Swap front and back buffers
 		glfwSwapBuffers(g_window);
 
@@ -935,71 +415,71 @@ int main(int argc, char **argv) {
 // function to translate source to string
 string getStringForSource(GLenum source) {
 
-	switch (source) {
-	case GL_DEBUG_SOURCE_API:
-		return("API");
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-		return("Window System");
-	case GL_DEBUG_SOURCE_SHADER_COMPILER:
-		return("Shader Compiler");
-	case GL_DEBUG_SOURCE_THIRD_PARTY:
-		return("Third Party");
-	case GL_DEBUG_SOURCE_APPLICATION:
-		return("Application");
-	case GL_DEBUG_SOURCE_OTHER:
-		return("Other");
-	default:
-		return("n/a");
+	switch(source) {
+		case GL_DEBUG_SOURCE_API: 
+			return("API");
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+			return("Window System");
+		case GL_DEBUG_SOURCE_SHADER_COMPILER:
+			return("Shader Compiler");
+		case GL_DEBUG_SOURCE_THIRD_PARTY:
+			return("Third Party");
+		case GL_DEBUG_SOURCE_APPLICATION:
+			return("Application");
+		case GL_DEBUG_SOURCE_OTHER:
+			return("Other");
+		default:
+			return("n/a");
 	}
 }
 
 // function to translate severity to string
 string getStringForSeverity(GLenum severity) {
 
-	switch (severity) {
-	case GL_DEBUG_SEVERITY_HIGH:
-		return("HIGH!");
-	case GL_DEBUG_SEVERITY_MEDIUM:
-		return("Medium");
-	case GL_DEBUG_SEVERITY_LOW:
-		return("Low");
-	default:
-		return("n/a");
+	switch(severity) {
+		case GL_DEBUG_SEVERITY_HIGH: 
+			return("HIGH!");
+		case GL_DEBUG_SEVERITY_MEDIUM:
+			return("Medium");
+		case GL_DEBUG_SEVERITY_LOW:
+			return("Low");
+		default:
+			return("n/a");
 	}
 }
 
 // function to translate type to string
 string getStringForType(GLenum type) {
-	switch (type) {
-	case GL_DEBUG_TYPE_ERROR:
-		return("Error");
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-		return("Deprecated Behaviour");
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-		return("Undefined Behaviour");
-	case GL_DEBUG_TYPE_PORTABILITY:
-		return("Portability Issue");
-	case GL_DEBUG_TYPE_PERFORMANCE:
-		return("Performance Issue");
-	case GL_DEBUG_TYPE_OTHER:
-		return("Other");
-	default:
-		return("n/a");
+	switch(type) {
+		case GL_DEBUG_TYPE_ERROR: 
+			return("Error");
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+			return("Deprecated Behaviour");
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+			return("Undefined Behaviour");
+		case GL_DEBUG_TYPE_PORTABILITY:
+			return("Portability Issue");
+		case GL_DEBUG_TYPE_PERFORMANCE:
+			return("Performance Issue");
+		case GL_DEBUG_TYPE_OTHER:
+			return("Other");
+		default:
+			return("n/a");
 	}
 }
 
 // actually define the function
 void APIENTRY debugCallbackARB(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei, const GLchar* message, GLvoid*) {
-	if (severity != GL_DEBUG_SEVERITY_NOTIFICATION) return;
+	if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
 
 	cerr << endl; // extra space
 
 	cerr << "Type: " <<
 		getStringForType(type) << "; Source: " <<
-		getStringForSource(source) << "; ID: " << id << "; Severity: " <<
+		getStringForSource(source) <<"; ID: " << id << "; Severity: " <<
 		getStringForSeverity(severity) << endl;
 
 	cerr << message << endl;
-
+	
 	if (type == GL_DEBUG_TYPE_ERROR_ARB) throw runtime_error("");
 }
