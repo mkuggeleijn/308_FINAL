@@ -61,6 +61,8 @@ private:
 
 	void rebuildPolyEdges();
 
+	void carveRiverPaths(vector<vector<vVertexPoint*>>);
+
 
 public:
 
@@ -68,6 +70,9 @@ public:
 	VoronoiHandler(int);
 	~VoronoiHandler();
 	vector<vTriangle*> generateTriangles(vector<vVertexPoint*>);
+	
+	void addTriangles(vector<vVertexPoint*>, vector<vTriangle*>);
+
 	vector<vVertexPoint*> relaxTriangles(vector<vVertexPoint*>, vector<vTriangle*>);
 	vector<vTriangle*> generateVPolys(vector<vVertexPoint*>);
 	vector<vVertexPoint*> generatePointSet(int);

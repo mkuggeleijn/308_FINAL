@@ -6,16 +6,19 @@ RiverHandler::RiverHandler() {
 
 	this -> graph = new VoronoiHandler(density);
 	this->splineMaker = new splineHandler();
-	graph -> sampleImage(imageSize, heightMap);
 
-	cout << "Generating geometry..." << endl;
-	this->meshDisplay = makeGeo(graph->getTriangles());
+	graph -> sampleImage(imageSize, heightMap);
 
 	this -> riverSources = findSourceCandidates(graph->getPolyVertices());
 	cout << "Found " << riverSources.size() << " river source candidates." << endl;
 	cout << "Making " << numberOfRivers << " rivers..." << endl;
 	this->rivers = makeRivers(numberOfRivers, riverSources);
 	cout << "Found " << rivers.size() << " rivers." << endl;
+
+	carveRivers(rivers, graph->getTriangles());
+
+	cout << "Generating geometry..." << endl;
+	this->meshDisplay = makeGeo(graph->getTriangles());
 
 	//Some debug stuff under here
 	/*
@@ -102,6 +105,10 @@ vector<vVertexPoint*> RiverHandler::makeRiverPath(vVertexPoint* source) {
 	vector<vVertexPoint*> river;
 	river.push_back(source);
 	source->setDownstream(getNextRiverPoint(source, &river));
+	for (vVertexPoint* p : river) {
+		cout << "River point " << p->getCoords() << endl;
+	}
+
 	return river;
 }
 
@@ -181,11 +188,11 @@ void RiverHandler::drawAll() {
 
 	drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
 	//drawEdges(graph->getPolyEdges(), &pointDisplay, cYellow);
-	drawPoints(graph->getPolyVertices(), &pointDisplay, cRed ,cBlue, radius);
-	//drawPoints(graph->getTriVertices(), &pointDisplay, cWhite, cYellow, radius);
+	//drawPoints(graph->getPolyVertices(), &pointDisplay, cRed ,cBlue, radius);
+	//drawPoints(riverPoints, &pointDisplay, cYellow, cRed, radius);
 	//drawPolygons(graph.getTriangles(), &pointDisplay, cGrey, cWhite, radius);
-	// drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
-	drawRiverSplines(rivers, &pointDisplay, cWhite, cWhite, radius);
+	drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
+	//drawRiverSplines(rivers, &pointDisplay, cWhite, cWhite, radius);
 
 	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
 	while (!draw_disp.is_closed()) {
@@ -269,6 +276,12 @@ void RiverHandler::drawRiverSplines(vector<vector<vVertexPoint*>> riverSet, CImg
 
 	}
 
+}
+
+void RiverHandler::carveRivers(vector<vector<vVertexPoint*>> rivers, vector<vTriangle*> triangles) {
+	for (vector<vVertexPoint*> r : rivers) {
+		graph->addTriangles(r, triangles);
+	}
 }
 
 void RiverHandler::drawRiversGL(){
@@ -358,7 +371,7 @@ Geometry* RiverHandler::makeGeo(vector<vTriangle*> triangles) {
 	triData.push_back(tData);
 
 	// return new Geometry(triData);
-	geoData =  new Geometry("./work/res/assets/bunny.obj");
+	//geoData =  new Geometry("./work/res/assets/bunny.obj");
 	return geoData;
 	
 }

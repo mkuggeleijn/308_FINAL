@@ -258,7 +258,7 @@ void Geometry::createNormals() {
 			//vertex_normal /= float(count);
 			vertex_normal = normalize(vertex_normal);
 		}
-		cout << "Generated normal: " << vertex_normal << endl;
+		//cout << "Generated normal: " << vertex_normal << endl;
 		m_normals.push_back(vertex_normal);
 	}
 

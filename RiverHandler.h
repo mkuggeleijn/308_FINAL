@@ -21,12 +21,12 @@ using namespace cimg_library;
 
 class RiverHandler {
 private:
-	int numberOfRivers = 5;
+	int numberOfRivers = 1;
 	int cutoffPercent = 5;
 	float startWater = 0.01;
 	int waterScalar = 1;
 	int widthScalar = 10;
-	int density = 400;
+	int density = 50;
 	//Image heightMap = Image("./work/res/textures/test_heightmap.png");
 	Image *heightMap;
 	CImg<unsigned char> drawheightMap = CImg<unsigned char>("./work/res/textures/simplebump.pgm");
@@ -55,10 +55,11 @@ private:
 	void drawRivers(vector<vector<vVertexPoint*>>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 	void drawRiverSplines(vector<vector<vVertexPoint*>>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 	
-	
 	void drawPolygons(vector<vTriangle*>, CImg<unsigned char>*, const unsigned char[], const unsigned char[], int);
 
 	Geometry* makeGeo(vector<vTriangle*>);
+
+	void carveRivers(vector<vector<vVertexPoint*>>, vector<vTriangle*>);
 
 public:
 	RiverHandler();

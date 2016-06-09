@@ -249,7 +249,9 @@ void render(int width, int height) {
 
 	// Render geometry
 	glPushMatrix(); {
+		
 		glScalef(10.0, 1.0, 10.0);
+		glTranslatef(-0.5, 0, -0.5);
 		g_geometry->renderGeometry();
 
 
@@ -382,7 +384,7 @@ int main(int argc, char **argv) {
 	//g_geometry = rHandler.getGeo();
 	// g_geometry = new Geometry("./work/res/assets/bunny.obj");
 
-
+	rHandler.drawAll();
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(g_window)) {

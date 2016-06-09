@@ -378,6 +378,120 @@ vector<vTriangle*> VoronoiHandler::generateTriangles(vector<vVertexPoint*> triCe
 	return finalTriangles;
 }
 
+// Add more points to an existing triangle mesh, subdividing it.
+void VoronoiHandler::addTriangles(vector<vVertexPoint*> triCenters, vector<vTriangle*> triangles) {
+
+	cout << "Subdividing " << triangles.size() << " triangles" << endl;
+
+	list <vTriangle*> newTriangles(triangles.begin(), triangles.end());
+	list <vTriangle*> badTriangles;
+	vector<vTriangle*> deleteTriangles;
+	vector<vTriangle*> finalTriangles;
+
+	vector<vEdge*> badEdges;
+	vector<vVertexPoint*> badCorners;
+
+
+	// add the points one at a time to the triangulation
+	for (vVertexPoint *v : triCenters) {
+		cout << "Adding point " << v->getCoords() << endl;
+		badTriangles.clear();
+
+		//if point is inside circumcircle of triangle, add it to the bad list
+		for (vTriangle *t : newTriangles) {
+			if (circumCircle(v, t)) {
+				//cout << "Point is inside triangle; " << t << endl;
+				badTriangles.push_back(t);
+			}
+		}
+
+		vector<vEdge*> holeEdges;
+
+		// find the boundary of the polygonal hole
+		for (vTriangle *t : badTriangles) {
+			// if edge is not shared by any other triangles in badTriangles, it's part of the hole
+			for (vEdge *e : t->getEdges()) {
+				bool shared = false;
+				if (e->polys.size() > 0) {
+					for (vTriangle *et : e->polys) {
+						if (et != t && (find(badTriangles.begin(), badTriangles.end(), et) != badTriangles.end())) {
+							shared = true;
+						}
+					}
+				}
+				if (!shared) {
+					// Adding edge to holeedge list
+					holeEdges.push_back(e);
+				}
+			}
+		}
+
+		// remove bad triangles from the data structure
+		for (vTriangle *t : badTriangles) {
+			//cout << "Removing bad triangle from list; " << t << endl;
+			newTriangles.remove(t);
+		}
+
+		// re-triangulate the polygonal hole
+		for (vEdge* e : holeEdges) {
+			vTriangle *t = new vTriangle(v, e->v0, e->v1); // form a triangle from edge to point
+			//cout << "Adding New Triangle " << t << " with "<<t->getEdges().size()<<" edges."<< endl;
+			newTriangles.push_back(t);
+		}
+
+	}
+
+	// if triangle contains a vertex from original super-triangle remove triangle from list
+	
+	//for (vTriangle *t : newTriangles) {
+	//	if (checkSuperTri(t, superTri)) deleteTriangles.push_back(t);
+	//}
+
+	// Tidy up all triangles to be deleted.  
+	// Need to have a list of all their edges & corners for proper disposal
+	for (vTriangle *t : deleteTriangles) {
+		//cout << "Removing bad triangle from list; " << t << endl;
+		newTriangles.remove(t);
+
+		for (vEdge *e : t->getEdges()) {
+			if (find(badEdges.begin(), badEdges.end(), e) == badEdges.end())
+				badEdges.push_back(e);
+		}
+
+		for (vVertexPoint *c : t->getCorners()) {
+			if (find(badCorners.begin(), badCorners.end(), c) == badCorners.end())
+				badCorners.push_back(c);
+		}
+		delete t;
+	}
+
+	// Tidy up all badEdges without associated polygons
+	for (vEdge *e : badEdges) {
+		if (e->polys.size() == 0)
+			delete e;
+	}
+
+	// Tidy up all badCorners without associated polygons
+	for (vVertexPoint *c : badCorners) {
+		if (c->getPolys().size() == 0)
+			delete c;
+	}
+
+	// Mark all border polygons and make final list
+	for (vTriangle *t : newTriangles) {
+		t->updateBorder();
+		finalTriangles.push_back(t);
+	}
+
+	cout << "Total triangles after subdivision: " << finalTriangles.size() << endl;
+	for (vTriangle *t : finalTriangles) {
+		cout << "\tTriangle " << t << ": " << t->getCorners().at(0)->getCoords() << " " << t->getCorners().at(1)->getCoords() << t->getCorners().at(2)->getCoords() << endl;
+	}
+	this->triangles = finalTriangles;
+	this->triEdges = findEdges(this->triangles);
+}
+
+
 // Check if a triangle shares a vertex with the super triangle (or any really)
 bool VoronoiHandler::checkSuperTri(vTriangle *t, vTriangle *superTri) {
 	//cout << "superTri corners: " << superTri->getCorners().size() << endl;
@@ -505,6 +619,13 @@ vector<vTriangle*> VoronoiHandler::generateVPolys(vector<vVertexPoint*> polyCent
 		}	
 	return triangles;
 }
+
+// Carve river paths into the mesh by subdividing
+void carveRiverPaths(vector<vector<vVertexPoint*>> rivers) {
+
+
+}
+
 
 // Given a polygon mesh, move all border vertices to the edges (range 0-1)
 vector<vVertexPoint*> VoronoiHandler::pinToEdges(vector<vVertexPoint*> points) {
