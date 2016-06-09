@@ -61,7 +61,7 @@ Geometry::Geometry(std::vector<std::vector<cgra::vec3>> triangles) {
 		m_points.push_back(t.at(2));
 		v2.p = m_points.size() - 1;
 
-		cout << "Adding " << t.at(0) << ", " << t.at(1) << "," << t.at(2) << endl;
+		//cout << "Adding " << t.at(0) << ", " << t.at(1) << "," << t.at(2) << endl;
 
 		triangle tri;
 
@@ -80,7 +80,7 @@ Geometry::Geometry(std::vector<std::vector<cgra::vec3>> triangles) {
 	cout << m_normals.size() - 1 << " normals" << endl;
 	cout << m_triangles.size() << " faces" << endl;
 
-	//if (m_normals.size() <= 1) createNormals();
+	if (m_normals.size() <= 1) createNormals();
 
 	cout << "Generated " <<m_normals.size()-1 << " normals." << endl;
 

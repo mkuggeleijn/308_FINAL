@@ -65,6 +65,7 @@ public:
 	void drawRiversGL();
 	void drawAll();
 	Geometry* getGeo();
+	Geometry* makeGeo();
 
 	
 

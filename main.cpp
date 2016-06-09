@@ -378,7 +378,8 @@ int main(int argc, char **argv) {
 	// Initialize out scene
 	//g_geometry = new Geometry(argv[1]);
 	// g_geometry = new Geometry(triData);
-	g_geometry = rHandler.getGeo();
+	g_geometry = rHandler.makeGeo();
+	//g_geometry = rHandler.getGeo();
 	// g_geometry = new Geometry("./work/res/assets/bunny.obj");
 
 

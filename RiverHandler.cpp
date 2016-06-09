@@ -6,15 +6,17 @@ RiverHandler::RiverHandler() {
 
 	this -> graph = new VoronoiHandler(density);
 	this->splineMaker = new splineHandler();
+	graph -> sampleImage(imageSize, heightMap);
+
 	cout << "Generating geometry..." << endl;
 	this->meshDisplay = makeGeo(graph->getTriangles());
 
-	graph -> sampleImage(imageSize, heightMap);
 	this -> riverSources = findSourceCandidates(graph->getPolyVertices());
 	cout << "Found " << riverSources.size() << " river source candidates." << endl;
 	cout << "Making " << numberOfRivers << " rivers..." << endl;
 	this->rivers = makeRivers(numberOfRivers, riverSources);
 	cout << "Found " << rivers.size() << " rivers." << endl;
+
 	//Some debug stuff under here
 	/*
 	for (vTriangle* t : graph->getTriangles()) {
@@ -318,6 +320,8 @@ void RiverHandler::drawPolygons(vector<vTriangle*> polys, CImg<unsigned char> *p
 
 Geometry* RiverHandler::makeGeo(vector<vTriangle*> triangles) {
 
+	Geometry *geoData = nullptr;
+
 	vector<vector<vec3>> triData;
 	/*
 	for (vTriangle* t : triangles) {
@@ -354,9 +358,62 @@ Geometry* RiverHandler::makeGeo(vector<vTriangle*> triangles) {
 	triData.push_back(tData);
 
 	// return new Geometry(triData);
-	return new Geometry("./work/res/assets/bunny.obj");
+	geoData =  new Geometry("./work/res/assets/bunny.obj");
+	return geoData;
 	
 }
+
+Geometry* RiverHandler::makeGeo() {
+
+	Geometry *geoData = nullptr;
+
+	vector<vector<vec3>> triData;
+	
+	for (vTriangle* t : graph->getTriangles()) {
+	vector<vec3> data;
+
+	// corners are sorted in anticlockwise, need clockwise for obj formatting
+	vec2 p0 = t->getCorners().at(2)->getCoords();
+	vec2 p1 = t->getCorners().at(1)->getCoords();
+	vec2 p2 = t->getCorners().at(0)->getCoords();
+
+	float p0z = t->getCorners().at(2)->getZValue() / 255;
+	float p1z = t->getCorners().at(1)->getZValue() / 255;
+	float p2z = t->getCorners().at(0)->getZValue() / 255;
+
+	vec3 tp0(p0.x, p0z, p0.y);
+	vec3 tp1(p1.x, p1z, p1.y);
+	vec3 tp2(p2.x, p2z, p2.y);
+
+	data.push_back(tp0);
+	data.push_back(tp1);
+	data.push_back(tp2);
+
+	triData.push_back(data);
+
+	} 
+
+	/*
+	vector<vec3> tData;
+	//vector<vector<vec3>> triData;
+
+	vec3 p0(10.0, 10.0, 0.0);
+	vec3 p1(10.0, -10.0, 0.0);
+	vec3 p2(-10.0, 10.0, 0.0);
+
+	tData.push_back(p0);
+	tData.push_back(p1);
+	tData.push_back(p2);
+
+	triData.push_back(tData);
+	*/
+
+	geoData = new Geometry(triData);
+	//geoData = new Geometry("./work/res/assets/bunny.obj");
+	return geoData;
+
+}
+
 
 Geometry* RiverHandler::getGeo() {
 	return meshDisplay;
