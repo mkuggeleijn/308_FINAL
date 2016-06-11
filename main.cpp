@@ -30,6 +30,8 @@ using namespace cgra;
 //
 GLFWwindow* g_window;
 
+bool showWindow = false;
+bool wireframe = false;
 
 // Projection values
 // 
@@ -107,7 +109,7 @@ void mouseButtonCallback(GLFWwindow *win, int button, int action, int mods) {
 			switch(button) {
 
 				case GLFW_MOUSE_BUTTON_RIGHT:
-					//g_geometry->toggleWireFrame();
+					showWindow = true;
 					break;
 
 				case GLFW_MOUSE_BUTTON_LEFT:
@@ -154,7 +156,7 @@ void scrollCallback(GLFWwindow *win, double xoffset, double yoffset) {
 // Called for every key event on since the last glfwPollEvents
 //
 void keyCallback(GLFWwindow *win, int key, int scancode, int action, int mods) {
-	// cout << "Key Callback :: key=" << key << "scancode=" << scancode << "action=" << action << "mods=" << mods << endl;
+	cout << "Key Callback :: key=" << key << "scancode=" << scancode << "action=" << action << "mods=" << mods << endl;
 
 	switch(key) {
 		case 82: 
@@ -165,7 +167,8 @@ void keyCallback(GLFWwindow *win, int key, int scancode, int action, int mods) {
 				default:
 					break;			
 			}
-	
+		case 32:
+			if (action == 1) wireframe = !wireframe;
 		default:
 			break;
 	}
@@ -224,6 +227,11 @@ void setupCamera(int width, int height) {
 //
 void render(int width, int height) {
 
+	if (showWindow) {
+		rHandler.drawAll();
+		showWindow = false;
+	}
+
 	// Set viewport to be the whole window
 	glViewport(0, 0, width, height);
 
@@ -246,7 +254,7 @@ void render(int width, int height) {
 	// Set the current material (for all objects) to red
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE); 
 	glColor3f(1.0f, 0.0f, 0.0f); //red
-
+	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	// Render geometry
 	glPushMatrix(); {
 		
@@ -384,7 +392,7 @@ int main(int argc, char **argv) {
 	//g_geometry = rHandler.getGeo();
 	// g_geometry = new Geometry("./work/res/assets/bunny.obj");
 
-	rHandler.drawAll();
+	
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(g_window)) {

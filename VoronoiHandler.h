@@ -6,6 +6,7 @@
 #include <random>
 #include <queue>
 #include <unordered_map>
+#include <list>
 
 #include "cgra_math.hpp"
 #include "cgra_geometry.hpp"
@@ -29,6 +30,8 @@ private:
 
 	int density;
 	int relaxPasses = 1;
+	int imageSize = 1024;
+
 	// vector<vec2> pointSet;
 
 	// Triangle mesh vertices are polygon centers
@@ -63,13 +66,17 @@ private:
 
 	void carveRiverPaths(vector<vector<vVertexPoint*>>);
 
+	void cornerCheck(vector<vTriangle*>);
+
+	
+
 
 public:
 
 	VoronoiHandler();
-	VoronoiHandler(int);
+	VoronoiHandler(int, Image*);
 	~VoronoiHandler();
-	vector<vTriangle*> generateTriangles(vector<vVertexPoint*>);
+	vector<vTriangle*> generateTriangles(vector<vVertexPoint*>, Image*);
 	
 	void addTriangles(vector<vVertexPoint*>, vector<vTriangle*>);
 
@@ -78,6 +85,7 @@ public:
 	vector<vVertexPoint*> generatePointSet(int);
 
 	vector<vTriangle*> getTriangles();
+	void updateTriVertices();
 	vector<vVertexPoint*> getTriVertices();
 	vector<vEdge*> getTriEdges();
 
@@ -87,7 +95,7 @@ public:
 
 	void sampleImage(int,Image*);
 
-	void changeDensity(int);
+	void upRes();
 	
 	// void newMesh();
 

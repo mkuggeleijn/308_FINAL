@@ -23,7 +23,7 @@ private:
 	vec4 defaultVirtualPoint = vec4(0.0, 0.0, 0.0, 1.0);
 	int controlPointRadius = 5;
 	int virtualPointRadius = 2;
-	float numberOfSamples = 10;
+	float numberOfSamples = 3;
 	mat4 catmullRom = mat4(-1, 3, -3, 1,
 		2, -5, 4, -1,
 		-1, 0, 1, 0,
@@ -41,5 +41,7 @@ public:
 	~splineHandler();
 	std::vector<vec4> clearTwoSegments(std::vector<vec4>);
 	vector<vec4> makeRiverSpline(vector<vVertexPoint*>);
+	vector<vVertexPoint*> makeRiverPointSpline(vector<vVertexPoint*>);
+	int getSampleSize();
 };
 

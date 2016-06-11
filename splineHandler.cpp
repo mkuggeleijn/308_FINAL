@@ -171,3 +171,65 @@ vector<vec4> splineHandler::makeRiverSpline(vector<vVertexPoint*> riverPoints) {
 
 	return calculateSpline(controlPoints);
 }
+
+
+vector<vVertexPoint*> splineHandler::makeRiverPointSpline(vector<vVertexPoint*> riverPoints) {
+	// vector<vec2> riverSpline;
+
+	// z-value will be used to interpolate water amount over spline.
+
+	vector<vec4> controlPoints;
+	vector<vec4> splinePoints;
+	vector<vVertexPoint*> finalPoints;
+
+	float v0x = riverPoints.at(0)->getCoords().x - (riverPoints.at(1)->getCoords().x - riverPoints.at(0)->getCoords().x);
+	float v0y = riverPoints.at(0)->getCoords().y - (riverPoints.at(1)->getCoords().y - riverPoints.at(0)->getCoords().y);
+	vec4 v0(v0x, v0y, 0, 1);
+
+	vec4 v1;
+	if (riverPoints.back()->getDownstream() != nullptr) {
+		vec2 coords = riverPoints.back()->getDownstream()->getCoords();
+		v1 = vec4(coords.x, coords.y, riverPoints.back()->getWater(), 1);
+	}
+	else {
+		float v1x = riverPoints.back()->getCoords().x + (riverPoints.back()->getCoords().x - riverPoints.at(riverPoints.size() - 2)->getCoords().x);
+		float v1y = riverPoints.back()->getCoords().y - (riverPoints.back()->getCoords().y - riverPoints.at(riverPoints.size() - 2)->getCoords().y);
+		v1 = vec4(v1x, v1y, riverPoints.back()->getWater(), 1);
+	}
+
+	controlPoints.push_back(v0);
+
+	for (vVertexPoint* p : riverPoints) {
+		vec4 cp(p->getCoords().x, p->getCoords().y, p->getWater(), 1);
+		controlPoints.push_back(cp);
+	}
+
+	controlPoints.push_back(v1);
+
+
+	splinePoints =  calculateSpline(controlPoints);
+
+	cout << "Generating river spline: " << endl;
+	cout << riverPoints.size() << " control points" << endl;
+	cout << "Should be " << riverPoints.size() + ((riverPoints.size() - 1)*numberOfSamples) << " final points" << endl;
+
+	for (int x = 1; x <= riverPoints.size()-1; x++) {
+		finalPoints.push_back(riverPoints.at(x-1));
+		for (int y = 1; y <= numberOfSamples; y++) {
+			vVertexPoint *p = new vVertexPoint(splinePoints.at(x + y).x, splinePoints.at(x + y).y);
+			p->setRiver(true);
+			p->setWater(splinePoints.at(x + y).z);
+			p->setScreenCoords(1024);
+			finalPoints.back()->setDownstream(p);
+			finalPoints.push_back(p);
+		}
+		finalPoints.back()->setDownstream(riverPoints.back());
+		finalPoints.push_back(riverPoints.back());
+	}
+	cout << "Actual final points: " << finalPoints.size() << endl;
+	return finalPoints;
+}
+
+int splineHandler::getSampleSize() {
+	return this->numberOfSamples;
+}

@@ -49,6 +49,7 @@ public:
 
 	float getZValue();
 	void setZValue(float);
+	void applyWater(int);
 
 	vector<vVertexPoint*> getNeighbours();
 	void addNeighbour(vVertexPoint*);
@@ -74,10 +75,13 @@ public:
 	void setWater(float);
 	float getWater();
 	void updateFlow(float);
+	float sampleWater();
 
 	void setPolyCenter(vTriangle*);
 	void removePolyCenter(vTriangle*);
 	vTriangle* getPolyCenter();
+
+	void setScreenCoords(int);
 
 	vec2 screenCoords;
 };

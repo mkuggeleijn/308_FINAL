@@ -24,9 +24,15 @@ private:
 	int numberOfRivers = 1;
 	int cutoffPercent = 5;
 	float startWater = 0.01;
-	int waterScalar = 1;
+	int waterScalar = 2;
 	int widthScalar = 10;
+	int zScalar = 2;
+	int smoothPasses = 0;
+
 	int density = 50;
+	// int finalDensity = 600 - density - (numberOfRivers * (density / 4));
+	int finalDensity = 50;
+
 	//Image heightMap = Image("./work/res/textures/test_heightmap.png");
 	Image *heightMap;
 	CImg<unsigned char> drawheightMap = CImg<unsigned char>("./work/res/textures/simplebump.pgm");
@@ -39,6 +45,7 @@ private:
 	vector<vVertexPoint*> riverPoints;
 	vector<vVertexPoint*> riverSources;
 	vector<vector<vVertexPoint*>> rivers;
+	vector<vTriangle*> riverTris;
 
 	//bool sortByZ(vVertexPoint*, vVertexPoint*) const;
 	
@@ -47,7 +54,7 @@ private:
 	vector<vector<vVertexPoint*>> makeRivers(int, vector<vVertexPoint*>);
 
 	vVertexPoint* getNextRiverPoint(vVertexPoint*, vector<vVertexPoint*>*);
-	vVertexPoint* dealWithLocalMin(vVertexPoint*, vector<vVertexPoint*>*);
+	//vVertexPoint* dealWithLocalMin(vVertexPoint*, vector<vVertexPoint*>*);
 
 	
 	void drawEdges(vector<vEdge*>, CImg<unsigned char>*, const unsigned char[]);
@@ -60,6 +67,14 @@ private:
 	Geometry* makeGeo(vector<vTriangle*>);
 
 	void carveRivers(vector<vector<vVertexPoint*>>, vector<vTriangle*>);
+
+	vector<vVertexPoint*> makeRiverSpline(vector<vVertexPoint*>, vector<vec4>);
+
+	void rebuildHeightData(Image*);
+
+	vector<vector<vector<float>>> returnRiverPaths();
+	vector<vector<vec3>> returnRiverTris();
+	
 
 public:
 	RiverHandler();

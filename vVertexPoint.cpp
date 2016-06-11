@@ -126,6 +126,10 @@ void vVertexPoint::setZValue(float zValue) {
 	this->zValue = zValue;
 }
 
+void vVertexPoint::applyWater(int waterScalar) {
+	zValue = zValue - (water*waterScalar);
+}
+
 vec2 vVertexPoint::getCoords() {
 	//cout << "Coords: " << coords << endl;
 	return this->coords;
@@ -201,4 +205,35 @@ void vVertexPoint::setWater(float water) {
 }
 float vVertexPoint::getWater() {
 	return this->water;
+}
+
+void vVertexPoint::setScreenCoords(int imageSize) {
+	int x = coords.x * (imageSize - 1);
+	int y = coords.y * (imageSize - 1);
+
+	screenCoords = vec2(x, y);
+}
+
+float vVertexPoint::sampleWater() {
+	// If we are a river, only sample if water = 0
+	//	- interpolate between all neighbouring non-zero river points
+	// If we aren't a river, interpolate between all points
+	float waterVal = 0;
+	//if (river && water == 0) {
+	if (!river || water == 0){
+		int riverCount = 0;
+		for (vVertexPoint *n : neighbours) {
+			if (n->isRiver() && n->getWater() > 0) {
+				riverCount++;
+				waterVal += n->getWater();
+				}
+			}
+		return waterVal / riverCount;
+		//} else if(!river && neighbours.size() > 0){
+		//	for (vVertexPoint *n : neighbours) {
+		//		waterVal += n->getWater();
+		//	}
+		//	return waterVal / neighbours.size();
+		}
+		return water;
 }
