@@ -6,6 +6,7 @@ RiverHandler::RiverHandler() {
 
 	this -> graph = new VoronoiHandler(density,heightMap);
 	this->splineMaker = new splineHandler();
+	splineMaker->setSampleSize(riverSamples);
 
 	graph -> sampleImage(imageSize, heightMap);
 
@@ -93,19 +94,12 @@ vector<vector<vVertexPoint*>> RiverHandler::makeRivers(int numberOfRivers, vecto
 		int n = dis(gen1);
 		// int n = rand() % (riverSources.size() - 1);
 		vVertexPoint *source = riverSources.at(n);
-		/*
-		while (source->isRiver()) {
-			cout << "In the river loop, n = " << n << endl;
-			//n = dis(gen1);
-			n = rand() % (riverSources.size() - 1);
-			vVertexPoint *source = riverSources.at(n);
-		}
-		*/
+
 		vector<vVertexPoint*> newRiver = makeRiverPath(source);
 		//vector<vVertexPoint*> newRiverSpline = splineMaker->makeRiverPointSpline(newRiver);
-		//vector<vVertexPoint*> newRiverSpline = makeRiverSpline(newRiver, splineMaker->makeRiverSpline(newRiver));
-		rivers.push_back(newRiver);
-		//rivers.push_back(newRiverSpline);
+		vector<vVertexPoint*> newRiverSpline = makeRiverSpline(newRiver, splineMaker->makeRiverSpline(newRiver));
+		//rivers.push_back(newRiver);
+		rivers.push_back(newRiverSpline);
 	}
 	cout << "Made " << rivers.size() << " rivers" << endl;
 	return rivers;
@@ -237,7 +231,7 @@ void RiverHandler::drawAll() {
 	//drawPoints(graph->getPolyVertices(), &pointDisplay, cGrey ,cDarkGrey, radius);
 	//drawPoints(riverPoints, &pointDisplay, cYellow, cRed, radius);
 	drawPolygons(graph->getTriangles(), &pointDisplay, cGrey, cRed, radius);
-	// drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
+	//drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
 	//drawRiverSplines(rivers, &pointDisplay, cWhite, cWhite, radius);
 
 	CImgDisplay draw_disp(pointDisplay, "Raw Mesh");
@@ -327,35 +321,36 @@ void RiverHandler::drawRiverSplines(vector<vector<vVertexPoint*>> riverSet, CImg
 vector<vVertexPoint*> RiverHandler::makeRiverSpline(vector<vVertexPoint*> controls, vector<vec4> splinePoints) {
 	
 	vector<vVertexPoint*> spline;
+	int sampleSize = splineMaker->getSampleSize();
 
 	splinePoints.erase(splinePoints.begin() + 1);
 	splinePoints.erase(splinePoints.end() - 1);
 
+	cout << "controlPoints.size() = " << controls.size() << endl;
+	cout << "splinePoints.size() = " << splinePoints.size() << endl;
+	cout << "sampleSize = " << sampleSize << endl;
 
-	int y = 1;
-	int x = 0;
-	//spline.push_back(controls.at(x));
-
-	while (y < splinePoints.size() - 2) {
+	for (int x = 0; x < controls.size() - 1; x++) {
+		cout << "Pushing control point " << x << endl;
 		spline.push_back(controls.at(x));
-		int z = 0;
-		while (z < splineMaker->getSampleSize()) {
-			vec4 sp = splinePoints.at(y+z);
-			vVertexPoint *v = new vVertexPoint(sp.x, sp.y);
-			v->setRiver(true);
-			v->setZValue(sp.z);
-			v->setScreenCoords(1024);
-			v->setWater(spline.back()->getWater());
-			spline.back()->setDownstream(v);
-			spline.push_back(v);
-			z++;
+		int splineIndex = (x * sampleSize);
+		for (int y = splineIndex; y < splineIndex + sampleSize; y++) {
+			cout << "y = " << y << endl;
+			vVertexPoint *r = new vVertexPoint(splinePoints.at(y).x, splinePoints.at(y).y);
+			r->setRiver(true);
+			r->setWater(splinePoints.at(y).z);
+			// need to set screen coords?
+			spline.back()->setDownstream(r);
+			spline.push_back(r);
 		}
-		y = y + (z + 2);
-		x++;
 	}
-	spline.back()->setDownstream(controls.at(x));
-	spline.push_back(controls.at(x));
 	
+	spline.back()->setDownstream(controls.back());
+	cout << "Pushing control point " << controls.size()-1 << endl;
+	spline.push_back(controls.back());
+
+	cout << "spline.size() = " << spline.size() << endl;
+
 	return spline;
 }
 

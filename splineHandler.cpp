@@ -233,3 +233,7 @@ vector<vVertexPoint*> splineHandler::makeRiverPointSpline(vector<vVertexPoint*> 
 int splineHandler::getSampleSize() {
 	return this->numberOfSamples;
 }
+
+void splineHandler::setSampleSize(int sampleSize) {
+	this->numberOfSamples = sampleSize;
+}

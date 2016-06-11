@@ -168,7 +168,10 @@ void keyCallback(GLFWwindow *win, int key, int scancode, int action, int mods) {
 					break;			
 			}
 		case 32:
-			if (action == 1) wireframe = !wireframe;
+			if (action == 1) {
+				wireframe = !wireframe;
+				cout << "wireframe = " << wireframe << endl;
+			}
 		default:
 			break;
 	}
@@ -255,6 +258,7 @@ void render(int width, int height) {
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE); 
 	glColor3f(1.0f, 0.0f, 0.0f); //red
 	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	// Render geometry
 	glPushMatrix(); {
 		
