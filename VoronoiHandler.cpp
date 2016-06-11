@@ -527,11 +527,7 @@ void VoronoiHandler::addTriangles(vector<vVertexPoint*> triCenters, vector<vTria
 		//t->updateCorners(imageSize);
 
 		t->updateAll(imageSize);
-		
-		//if (t->isRiver()) t->updateCornerZ();
-		//else {
-		//	t->getCenter()->setZValue(heightMap->getIntensity(t->getCenter()->screenCoords.x, t->getCenter()->screenCoords.y) / 255);
-		//}
+	
 		finalTriangles.push_back(t);
 	}
 

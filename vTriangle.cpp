@@ -248,27 +248,6 @@ void vTriangle::updateCorners(int imageSize) {
 	}
 }
 
-void vTriangle::updateCornerZ() {
-	//float minZ = min(corners.at(0)->getZValue(), min(corners.at(1)->getZValue(), corners.at(2)->getZValue()));
-	float minZ = 10000;
-	bool amRiver = false;
-	for (vVertexPoint *c : corners) {
-		cout << c->getZValue() << endl;
-		if (c->isRiver()) {
-			minZ = min(minZ, c->getZValue());
-			cout << "Found a river Triangle: " << this << endl;
-			amRiver = true;
-		};
-	}
-	river = amRiver;
-	if (minZ < 10000) {
-		if (!corners.at(0)->isRiver()) corners.at(0)->setZValue(minZ);
-		if (!corners.at(1)->isRiver()) corners.at(0)->setZValue(minZ);
-		if (!corners.at(2)->isRiver()) corners.at(0)->setZValue(minZ);
-		center->setZValue(minZ);
-	}
-	
-}
 
 void vTriangle::setRiver(bool river, float water) {
 	this->river = river;

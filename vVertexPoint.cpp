@@ -215,11 +215,9 @@ void vVertexPoint::setScreenCoords(int imageSize) {
 }
 
 float vVertexPoint::sampleWater() {
-	// If we are a river, only sample if water = 0
-	//	- interpolate between all neighbouring non-zero river points
-	// If we aren't a river, interpolate between all points
+
 	float waterVal = 0;
-	//if (river && water == 0) {
+
 	if (!river || water == 0){
 		int riverCount = 0;
 		for (vVertexPoint *n : neighbours) {
@@ -229,11 +227,6 @@ float vVertexPoint::sampleWater() {
 				}
 			}
 		return waterVal / riverCount;
-		//} else if(!river && neighbours.size() > 0){
-		//	for (vVertexPoint *n : neighbours) {
-		//		waterVal += n->getWater();
-		//	}
-		//	return waterVal / neighbours.size();
 		}
 		return water;
 }

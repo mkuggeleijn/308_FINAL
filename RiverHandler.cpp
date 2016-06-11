@@ -15,7 +15,9 @@ RiverHandler::RiverHandler() {
 	cout << "Making " << numberOfRivers << " rivers..." << endl;
 	this->rivers = makeRivers(numberOfRivers, riverSources);
 	cout << "Found " << rivers.size() << " rivers." << endl;
+
 	carveRivers(rivers, graph->getTriangles());
+	
 	for (int x = 0; x < smoothPasses; x++) {
 		graph->upRes();
 	}
@@ -90,15 +92,17 @@ vector<vector<vVertexPoint*>> RiverHandler::makeRivers(int numberOfRivers, vecto
 	std::mt19937 gen1(rd1());
 	std::uniform_real_distribution<> dis(0, range);
 
+
+
 	for (int x = 0; x < numberOfRivers; x++) {
 		int n = dis(gen1);
+		cout << "Random source index = " << n << endl;
 		// int n = rand() % (riverSources.size() - 1);
 		vVertexPoint *source = riverSources.at(n);
 
 		vector<vVertexPoint*> newRiver = makeRiverPath(source);
-		//vector<vVertexPoint*> newRiverSpline = splineMaker->makeRiverPointSpline(newRiver);
 		vector<vVertexPoint*> newRiverSpline = makeRiverSpline(newRiver, splineMaker->makeRiverSpline(newRiver));
-		//rivers.push_back(newRiver);
+		rivers.push_back(newRiver);
 		rivers.push_back(newRiverSpline);
 	}
 	cout << "Made " << rivers.size() << " rivers" << endl;
@@ -213,6 +217,7 @@ void RiverHandler::drawAll() {
 	//CImg stuff, needed for testing
 	const unsigned char cRed[] = { 255,0,0 };
 	const unsigned char cBlue[] = { 0,0,255 };
+	const unsigned char cDarkBlue[] = { 0,0,100 };
 	const unsigned char cWhite[] = { 255,255,255 };
 	const unsigned char cBlack[] = { 0,0,0 };
 	const unsigned char cGrey[] = { 127,127,127 };
@@ -227,10 +232,10 @@ void RiverHandler::drawAll() {
 	//cout << "Found " << graph->getPolygons().size() << " polygons, with " << graph->getPolyEdges().size() << " edges." << endl;
 
 	//drawEdges(graph->getTriEdges(), &pointDisplay, cGrey);
-	//drawEdges(graph->getPolyEdges(), &pointDisplay, cDarkGrey);
+	drawEdges(graph->getPolyEdges(), &pointDisplay, cDarkBlue);
 	//drawPoints(graph->getPolyVertices(), &pointDisplay, cGrey ,cDarkGrey, radius);
-	//drawPoints(riverPoints, &pointDisplay, cYellow, cRed, radius);
 	drawPolygons(graph->getTriangles(), &pointDisplay, cGrey, cRed, radius);
+	drawPoints(riverSources, &pointDisplay, cYellow, cRed, radius);
 	//drawRivers(rivers, &pointDisplay, cWhite, cWhite,radius);
 	//drawRiverSplines(rivers, &pointDisplay, cWhite, cWhite, radius);
 
@@ -331,37 +336,41 @@ vector<vVertexPoint*> RiverHandler::makeRiverSpline(vector<vVertexPoint*> contro
 	cout << "sampleSize = " << sampleSize << endl;
 
 	for (int x = 0; x < controls.size() - 1; x++) {
-		cout << "Pushing control point " << x << endl;
+		//cout << "Pushing control point " << x << endl;
 		spline.push_back(controls.at(x));
+		cout << "River point at: " << spline.back()->getCoords() << endl;
 		int splineIndex = (x * sampleSize);
 		for (int y = splineIndex; y < splineIndex + sampleSize; y++) {
-			cout << "y = " << y << endl;
+			//cout << "y = " << y << endl;
 			vVertexPoint *r = new vVertexPoint(splinePoints.at(y).x, splinePoints.at(y).y);
 			r->setRiver(true);
 			r->setWater(splinePoints.at(y).z);
 			// need to set screen coords?
 			spline.back()->setDownstream(r);
 			spline.push_back(r);
+			cout << "River point at: " << spline.back()->getCoords() << endl;
 		}
 	}
 	
 	spline.back()->setDownstream(controls.back());
-	cout << "Pushing control point " << controls.size()-1 << endl;
+	//cout << "Pushing control point " << controls.size()-1 << endl;
 	spline.push_back(controls.back());
+	cout << "River point at: " << spline.back()->getCoords() << endl;
 
-	cout << "spline.size() = " << spline.size() << endl;
+	cout << "spline.size() = " << spline.size() << endl << endl;
 
 	return spline;
 }
 
 void RiverHandler::carveRivers(vector<vector<vVertexPoint*>> rivers, vector<vTriangle*> triangles) {
 	for (vector<vVertexPoint*> r : rivers) {
+		cout << "Adding a river of " << r.size() << " points." << endl;
 		graph->addTriangles(r, triangles);
+		triangles = graph->getTriangles();
 	}
 	riverTris.clear();
 	for (vTriangle *t : graph->getTriangles()) {
 		if (t->isRiver()) {
-			//t->updateCornerZ();
 			riverTris.push_back(t);
 		}
 	}
@@ -560,17 +569,6 @@ void RiverHandler::rebuildHeightData(Image *heightMap) {
 		p->applyWater(waterScalar);
 	}
 
-	/*
-	for (vector<vVertexPoint*> river : rivers) {
-		for (vVertexPoint *r : river) {
-			r->setZValue(r->getZValue() - r->getWater());
-		}
-	}
-
-	for (vTriangle *t : graph->getTriangles()) {
-		t->updateCornerZ();
-	}
-	*/
 
 }
 

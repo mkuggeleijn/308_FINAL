@@ -22,13 +22,13 @@ using namespace cimg_library;
 class RiverHandler {
 private:
 	int density = 50;
-	int numberOfRivers = 3;
+	int numberOfRivers = 1;
 	int cutoffPercent = 5;
 	float startWater = 0.01;
 	int waterScalar = 2;
 	int widthScalar = 10;
 	int zScalar = 2;
-	int smoothPasses = 0;
+	int smoothPasses = 1;
 	int complexMultiplier = density / 100;
 	int riverSamples = max(5, ((smoothPasses * complexMultiplier) + 1));
 

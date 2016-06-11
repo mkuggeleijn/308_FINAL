@@ -49,8 +49,8 @@ public:
 	void setNeighbours(vector<vTriangle*>);
 
 	void updateCorners(int);
-	void updateCornerZ();
 	void updateAll(int);
+
 	
 
 	void addCorner(vVertexPoint*);
