@@ -217,16 +217,23 @@ void vVertexPoint::setScreenCoords(int imageSize) {
 float vVertexPoint::sampleWater() {
 
 	float waterVal = 0;
-
-	if (!river || water == 0){
+	float maxWater = 0;
+	if (!river || water == 0) {
 		int riverCount = 0;
 		for (vVertexPoint *n : neighbours) {
-			if (n->isRiver() && n->getWater() > 0) {
+			if ((n->isRiver() && n->getWater() > 0)) {
 				riverCount++;
 				waterVal += n->getWater();
+				maxWater = max(maxWater, n->getWater());
+			}
+			if (!n->isRiver() && n->getWater() > 0){
+				waterVal += n->getWater();
+				maxWater = max(maxWater, n->getWater());
 				}
 			}
-		return waterVal / riverCount;
+		if (border) return maxWater;
+		if (riverCount > 0) return (waterVal / riverCount);
+		return (maxWater / 3);
 		}
 		return water;
 }

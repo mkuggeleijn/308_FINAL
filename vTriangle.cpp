@@ -148,6 +148,7 @@ void vTriangle::updateAll(int imageSize) {
 	float centerX = 0.0;
 	float centerY = 0.0;
 	bool amRiver = false;
+	int riverNeighbours = 0;
 
 	updateBorder();
 
@@ -162,6 +163,11 @@ void vTriangle::updateAll(int imageSize) {
 
 	this->center->setCoords(centerX, centerY);
 	this->center->setScreenCoords(imageSize);
+
+	for (vTriangle *t : neighbours) {
+		if (t->isRiver()) riverNeighbours++;
+	}
+	if (riverNeighbours >= 2) amRiver = true;
 
 	river = amRiver;
 

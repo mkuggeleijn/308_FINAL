@@ -22,15 +22,16 @@ using namespace cimg_library;
 class RiverHandler {
 private:
 	int density = 50;
-	int numberOfRivers = 1;
+	int numberOfRivers = 2;
 	int cutoffPercent = 5;
-	float startWater = 0.01;
-	int waterScalar = 2;
+	float startWater = 0;
+	float waterScalar = 1;
 	int widthScalar = 10;
 	int zScalar = 2;
 	int smoothPasses = 1;
-	int complexMultiplier = density / 100;
+	int complexMultiplier = density / 10;
 	int riverSamples = max(5, ((smoothPasses * complexMultiplier) + 1));
+	vector<int> sourcesUsed;
 
 	
 	// int finalDensity = 600 - density - (numberOfRivers * (density / 4));
@@ -38,9 +39,9 @@ private:
 
 	//Image heightMap = Image("./work/res/textures/test_heightmap.png");
 	Image *heightMap;
-	CImg<unsigned char> drawheightMap = CImg<unsigned char>("./work/res/textures/simplebump.pgm");
-	int imageSize = drawheightMap.width();
-	//int imageSize = 1024;
+	//CImg<unsigned char> drawheightMap = CImg<unsigned char>("./work/res/textures/simplebump.pgm");
+	//int imageSize = drawheightMap.width();
+	int imageSize = 1024;
 	Geometry *meshDisplay = nullptr;
 
 	VoronoiHandler *graph;

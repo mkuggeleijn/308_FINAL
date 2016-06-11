@@ -473,7 +473,9 @@ void VoronoiHandler::addTriangles(vector<vVertexPoint*> triCenters, vector<vTria
 			vTriangle *t = new vTriangle(v, e->v0, e->v1); // form a triangle from edge to point
 			if (e->v0->isRiver() && e->v1->isRiver()) {
 				//v->setRiver(true);
-				//v->setWater((e->v0->getWater() + e->v1->getWater() / 2));
+				//float minWater = min(e->v0->getWater(), e->v1->getWater());
+				//float maxWater = max(e->v0->getWater(), e->v1->getWater());
+				//v->setWater(minWater + ((maxWater - minWater)/2));
 			}
 			
 			//if (!t->isRiver()) v->setZValue(heightMap->getIntensity(px, py) / 255);
